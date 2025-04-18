@@ -1,164 +1,209 @@
-"""
-main.py - 2D Tile-based Game using Pygame and Pytmx (Modified for left-edge transitions)
-
-Features:
-- Tilemap loading and rendering using pyscroll
-- Player movement with arrow keys
-- Left-edge map transitions
-- Camera following player
-- Sprite management for player and NPC
-
-Author: Ron
-Date: 2025-04-08
-Modified: 2025-04-08 (Added transitions between maps)
-"""
+# main.py
 
 import pygame
-import pytmx
+import pytmx # Keep this import
 import pyscroll
 from pytmx.util_pygame import load_pygame
-from typing import Optional, List
+from typing import Optional # Keep if needed, maybe not directly now
 
-# Game Constants
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-FPS = 60
-ZOOM_LEVEL = 1
-DEFAULT_LAYER = 1
-TILE_SIZE = 32
-
-# File paths (consider using relative paths or config file)
-PIERMASTER_IMAGE = './Assets/Images/piermaster.png'
-PLAYER_IMAGE = './Assets/Images/gentleman.png'
-MAYOR_IMAGE = './Assets/Images/mayor.png'
-MAP_PATHS = {
-    'pier': "./Assets/Maps/pier_map.tmx",
-    'palace': "./Assets/Maps/palace_map.tmx",
-    'streets': "./Assets/Maps/streets_map.tmx"
-}
-
-class Player(pygame.sprite.Sprite):
-    """Player character controlled by arrow keys with collision-aware movement."""
-    
-    def __init__(self, x: int, y: int) -> None:
-        super().__init__()
-        self.image = pygame.image.load(PLAYER_IMAGE).convert_alpha()
-        self.rect = self.image.get_rect(topleft=(x, y))
-        self.hitbox = self.rect.inflate(-8, -8)  # Tighter collision detection
-        self.speed = 5
-
-    def update(self, *args, **kwargs) -> None:
-        """Update player position with normalized diagonal movement."""
-        keys = pygame.key.get_pressed()
-        dx, dy = 0, 0
-        
-        dx += keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]
-        dy += keys[pygame.K_DOWN] - keys[pygame.K_UP]
-        
-        # Normalize diagonal movement
-        if dx and dy:
-            dx *= 0.7071  # 1/√2 approximation
-            dy *= 0.7071
-            
-        self.rect.move_ip(dx * self.speed, dy * self.speed)
-        self.hitbox.center = self.rect.center
-
-class Piermaster(pygame.sprite.Sprite):
-    """NPC character with fixed position."""
-    
-    def __init__(self) -> None:
-        super().__init__()
-        self.image = pygame.image.load(PIERMASTER_IMAGE).convert_alpha()
-        self.rect = self.image.get_rect(center=(SCREEN_WIDTH//4, SCREEN_HEIGHT//2))
+# Import from our new modules
+import config
+import sprites
 
 class Game:
-    """Main game controller handling map transitions and game loop."""
-    
+    """Main game controller handling map loading, transitions, and game loop."""
+
     def __init__(self, screen: pygame.Surface) -> None:
         self.screen = screen
         self.clock = pygame.time.Clock()
         self.running = True
-        self.current_map = None  # Track current map
-        
-        # Initialize sprites
-        self.player = Player(100, 50)
-        self.piermaster = Piermaster()
-        
-        # Load initial map using key
-        self.load_map('pier')
+        self.current_map_key: Optional[str] = None # Track current map key
+        self.tmx_data: Optional[pytmx.TiledMap] = None
+        self.map_layer: Optional[pyscroll.BufferedRenderer] = None
+        self.group: Optional[pyscroll.PyscrollGroup] = None
+
+        # Initialize sprites using classes from sprites.py
+        # Define starting positions (could also come from map data later)
+        player_start_x = 100
+        player_start_y = 50
+        self.player = sprites.Player(player_start_x, player_start_y)
+
+        # Example: Place Piermaster based on config or map data later
+        piermaster_start_x = config.SCREEN_WIDTH // 4
+        piermaster_start_y = config.SCREEN_HEIGHT // 2
+        self.piermaster = sprites.Piermaster(piermaster_start_x, piermaster_start_y)
+
+        # Load initial map using key from config
+        self.load_map('pier') # Start with the pier map
 
     def load_map(self, map_key: str) -> None:
-        """Load and configure new map with error handling."""
+        """Load and configure a new map based on its key."""
+        print(f"Loading map: {map_key}")
         try:
-            map_path = MAP_PATHS[map_key]
+            if map_key not in config.MAP_PATHS:
+                raise ValueError(f"Map key '{map_key}' not found in config.MAP_PATHS")
+
+            map_path = config.MAP_PATHS[map_key]
             self.tmx_data = load_pygame(map_path)
             map_data = pyscroll.TiledMapData(self.tmx_data)
-            
-            # Configure rendering
+
+            # Configure rendering using constants from config
             self.map_layer = pyscroll.BufferedRenderer(
-                map_data, 
+                map_data,
                 self.screen.get_size(),
-                clamp_camera=True
+                clamp_camera=True,
+                alpha=True # Enable alpha for potential transparency effects
             )
-            self.map_layer.zoom = ZOOM_LEVEL
-            
-            # Create sprite group
+            self.map_layer.zoom = config.ZOOM_LEVEL
+
+            # Create sprite group for the new map
             self.group = pyscroll.PyscrollGroup(
                 map_layer=self.map_layer,
-                default_layer=DEFAULT_LAYER
+                default_layer=config.DEFAULT_LAYER
             )
-            self.group.add(self.player, self.piermaster)
-            
-            self.current_map = map_key  # Update current map
-            
-        except (KeyError, FileNotFoundError, pytmx.exceptions.TmxException) as e:
-            print(f"Map loading error: {str(e)}")
-            self.running = False
+
+            # --- Important: Add sprites to the group ---
+            # Decide which sprites belong on which map
+            self.group.add(self.player) # Player is usually on all maps
+
+            if map_key == 'pier':
+                 # Only add piermaster if the current map is 'pier'
+                 # Make sure piermaster instance exists if needed here
+                 if not hasattr(self, 'piermaster'):
+                      # Or load/create it based on map data
+                      piermaster_start_x = config.SCREEN_WIDTH // 4
+                      piermaster_start_y = config.SCREEN_HEIGHT // 2
+                      self.piermaster = sprites.Piermaster(piermaster_start_x, piermaster_start_y)
+                 self.group.add(self.piermaster)
+            # Add other map-specific sprites here
+            # elif map_key == 'palace':
+            #    self.group.add(sprites.Mayor(x, y)) # Example
+
+            self.current_map_key = map_key  # Update current map key
+
+        # Catch specific expected errors and general exceptions during loading
+        except (KeyError, FileNotFoundError, ValueError, pytmx.TmxMapError, pygame.error, Exception) as e:
+            # Note: Changed pytmx.exceptions.TmxException based on previous discussion
+            # Using pytmx.TmxMapError might be more specific if available and desired
+            # Added ValueError for the explicit check
+            # Added pygame.error for potential image loading issues within pytmx/pyscroll
+            # Added base Exception to catch unexpected issues during complex loading
+            print(f"Error loading map '{map_key}': {type(e).__name__} - {e}")
+            # Optionally, provide more context or traceback here
+            # import traceback
+            # traceback.print_exc()
+            self.running = False # Stop game on critical loading error
+
+    def handle_map_transitions(self) -> None:
+        """Check for and execute map transitions based on player position."""
+        if not self.player or not self.current_map_key:
+             return # Cannot transition without player or current map
+
+        player_rect = self.player.rect
+        buffer = config.MAP_TRANSITION_BUFFER # Use constant
+
+        # --- Define transitions based on current map ---
+        if self.current_map_key == 'pier' and player_rect.left <= 0:
+            print("Transitioning from pier (left) to palace")
+            self.load_map('palace')
+            # Position player on the right side of the new map
+            self.player.rect.right = config.SCREEN_WIDTH - buffer
+            self.player.hitbox.center = self.player.rect.center # Update hitbox pos
+
+        elif self.current_map_key == 'palace' and player_rect.right >= config.SCREEN_WIDTH:
+             print("Transitioning from palace (right) to pier")
+             self.load_map('pier')
+             # Position player on the left side of the new map
+             self.player.rect.left = buffer
+             self.player.hitbox.center = self.player.rect.center # Update hitbox pos
+
+        # Add more transitions here (e.g., palace <-> streets)
+        # elif self.current_map_key == 'palace' and player_rect.left <= 0:
+        #     print("Transitioning from palace (left) to streets")
+        #     self.load_map('streets')
+        #     self.player.rect.right = config.SCREEN_WIDTH - buffer
+        #     self.player.hitbox.center = self.player.rect.center
+
+        # elif self.current_map_key == 'streets' and player_rect.right >= config.SCREEN_WIDTH:
+        #     print("Transitioning from streets (right) to palace")
+        #     self.load_map('palace')
+        #     self.player.rect.left = buffer
+        #     self.player.hitbox.center = self.player.rect.center
+
 
     def run(self) -> None:
-        """Main game loop with frame rate control."""
+        """Main game loop."""
         while self.running:
+            dt = self.clock.tick(config.FPS) / 1000.0 # Delta time in seconds
+
             self.handle_events()
-            self.update()
-            
-            # Handle map transitions
-            if self.current_map == 'pier' and self.player.rect.x <= 0:
-                # Transition to palace on left edge
-                self.load_map('palace')
-                self.player.rect.x = SCREEN_WIDTH - 30  # Right side of palace
-            elif self.current_map == 'palace' and self.player.rect.x >= SCREEN_WIDTH - 30:
-                # Transition back to sea on right edge
-                self.load_map('pier')
-                self.player.rect.x = 30  # Left side of sea
-            
+            self.update(dt) # Pass delta time to update if needed for physics later
+            self.handle_map_transitions() # Check transitions after update
             self.draw()
-            self.clock.tick(FPS)
+
+        print("Exiting game.") # Add a message when the loop ends
 
     def handle_events(self) -> None:
-        """Handle system events."""
+        """Handle user input and system events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            # Add other event handling (e.g., key presses for actions) here
+            # elif event.type == pygame.KEYDOWN:
+            #     if event.key == pygame.K_SPACE:
+            #         print("Action key pressed!")
 
-    def update(self) -> None:
-        """Update game state."""
+    def update(self, dt: float) -> None:
+        """Update game state (sprites, camera)."""
+        # Only update if a map/group is loaded
         if self.group:
-            self.group.update()
-            self.group.center(self.player.rect.center)
+            self.group.update(dt) # Pass dt to sprites' update methods
+            self.group.center(self.player.rect.center) # Keep camera centered
 
     def draw(self) -> None:
-        """Render all game elements."""
-        if self.group:
+        """Render the current scene."""
+        if self.group and self.map_layer:
+            # A common pattern is:
+            # 1. Fill background (optional, map usually covers it)
+            # self.screen.fill((0, 0, 0)) # Black background if map has gaps
+
+            # 2. Draw the map layer
             self.group.draw(self.screen)
+
+            # 3. Draw UI elements on top (if any)
+            # Example: draw_debug_info(self.screen, self.player)
+
+            # 4. Flip the display
             pygame.display.flip()
+        elif not self.running:
+             # Maybe show an error screen if running is false due to load error
+             pass
+
 
 def main() -> None:
-    """Initialize and run the game."""
+    """Initialize Pygame, create Game instance, and run the game."""
     pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Pier to the Past Game")
-    Game(screen).run()
-    pygame.quit()
+    print("Pygame initialized.")
+
+    # Use constants from config for screen dimensions
+    screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+    pygame.display.set_caption("Pier to the Past Game") # Keep caption
+
+    try:
+        print("Starting game...")
+        game = Game(screen)
+        game.run()
+    except Exception as e:
+        print(f"\n--- An unexpected error occurred during game execution ---")
+        print(f"{type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        print("----------------------------------------------------------")
+    finally:
+        print("Quitting Pygame.")
+        pygame.quit()
+        # import sys
+        # sys.exit() # Ensure exit if error occurred
 
 if __name__ == "__main__":
     main()
