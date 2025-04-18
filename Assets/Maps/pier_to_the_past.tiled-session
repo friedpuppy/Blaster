@@ -1,6 +1,7 @@
 {
-    "activeFile": "",
+    "activeFile": "sea.tmx",
     "expandedProjectPaths": [
+        "."
     ],
     "fileStates": {
         "House.tsx": {
@@ -56,11 +57,11 @@
             }
         },
         "sea.tmx": {
-            "scale": 0.68578125,
+            "scale": 1,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 480.4739120528595,
-                "y": 839.917976760082
+                "x": 394.5,
+                "y": 267
             }
         },
         "signposts.tsx": {
@@ -69,11 +70,11 @@
             "scaleInEditor": 1
         },
         "streets_map.tmx": {
-            "scale": 4,
+            "scale": 1.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 595.875,
-                "y": 430.5
+                "x": 705.6666666666667,
+                "y": 298
             }
         },
         "trees-and-bushes.tsx": {
@@ -85,16 +86,18 @@
     "last.imagePath": "//synology/sharedDrive/CALLUM/EDUCATION/2022-2025 Brighton University/3-YEAR THREE/CI601 The Computing Project/GAME DEVELOPMENT/Master/Assets/Images",
     "map.lastUsedFormat": "tmx",
     "openFiles": [
+        "sea.tmx",
+        "streets_map.tmx"
     ],
     "project": "pier_to_the_past.tiled-project",
     "recentFiles": [
+        "streets_map.tmx",
+        "sea.tmx",
         "PathAndObjects.tsx",
         "pier_map.tmx",
         "palace_map.tmx",
         "House.tsx",
         "Ocean_SpriteSheet.tsx",
-        "sea.tmx",
-        "streets_map.tmx",
         "mayorsHouse.tmx",
         "signposts.tsx",
         "grass.tsx",
