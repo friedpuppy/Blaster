@@ -1,0 +1,118 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "sea.tmx",
+    "expandedProjectPaths": [
+        "Map-3",
+        "."
+    ],
+    "fileStates": {
+        "House.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Map-3/ terracedHouses.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Map-3/map3.tmx": {
+            "scale": 0.7768229166666667,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 479.51726449882665,
+                "y": 320.5363727790814
+            }
+        },
+        "Map-3/terracedHouses.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "Ocean_SpriteSheet.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 4
+        },
+        "PathAndObjects.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "grass.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "mayorsHouse.tmx": {
+            "scale": 0.7768229166666667,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 439.61112973516595,
+                "y": 320.5363727790814
+            }
+        },
+        "palace.tsx": {
+            "scaleInDock": 1
+        },
+        "sea.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 535,
+                "y": 252
+            }
+        },
+        "seax.tmx": {
+            "scale": 0.7768229166666667,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 479.51726449882665,
+                "y": 320.5363727790814
+            }
+        },
+        "signposts.tsx": {
+            "scaleInDock": 0.5,
+            "scaleInEditor": 5.5
+        },
+        "streets_map.tmx": {
+            "scale": 0.7768229166666667,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 480.1609118337244,
+                "y": 320.53637277908143
+            }
+        },
+        "trees-and-bushes.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 4
+        }
+    },
+    "frame.defaultDuration": 300,
+    "last.imagePath": "/home/ron/python/tilemapLearning",
+    "map.lastUsedFormat": "tmx",
+    "openFiles": [
+        "sea.tmx",
+        "Ocean_SpriteSheet.tsx",
+        "House.tsx",
+        "grass.tsx",
+        "PathAndObjects.tsx",
+        "mayorsHouse.tmx",
+        "trees-and-bushes.tsx",
+        "signposts.tsx",
+        "streets_map.tmx"
+    ],
+    "project": "learning.tiled-project",
+    "recentFiles": [
+        "streets_map.tmx",
+        "signposts.tsx",
+        "trees-and-bushes.tsx",
+        "mayorsHouse.tmx",
+        "PathAndObjects.tsx",
+        "grass.tsx",
+        "House.tsx",
+        "Ocean_SpriteSheet.tsx",
+        "sea.tmx",
+        "seax.tmx",
+        "Map-3/terracedHouses.tsx",
+        "Map-3/map3.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx"
+}
