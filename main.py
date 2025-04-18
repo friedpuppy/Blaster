@@ -117,18 +117,22 @@ class Game:
              self.player.rect.left = buffer
              self.player.hitbox.center = self.player.rect.center # Update hitbox pos
 
-        # Add more transitions here (e.g., palace <-> streets)
-        # elif self.current_map_key == 'palace' and player_rect.left <= 0:
-        #     print("Transitioning from palace (left) to streets")
-        #     self.load_map('streets')
-        #     self.player.rect.right = config.SCREEN_WIDTH - buffer
-        #     self.player.hitbox.center = self.player.rect.center
+        # --- NEW TRANSITION: Palace (Left Edge) to Streets ---
+        elif self.current_map_key == 'palace' and player_rect.left <= 0:
+            print("Transitioning from palace (left) to streets")
+            # Load the streets map (make sure 'streets' key exists in config.MAP_PATHS)
+            self.load_map('streets')
+            # Position player on the right side of the new 'streets' map
+            self.player.rect.right = config.SCREEN_WIDTH - buffer
+            self.player.hitbox.center = self.player.rect.center # Update hitbox pos
+        # --- END OF NEW TRANSITION ---
 
-        # elif self.current_map_key == 'streets' and player_rect.right >= config.SCREEN_WIDTH:
-        #     print("Transitioning from streets (right) to palace")
-        #     self.load_map('palace')
-        #     self.player.rect.left = buffer
-        #     self.player.hitbox.center = self.player.rect.center
+        # Add more transitions here (e.g., streets back to palace)
+        elif self.current_map_key == 'streets' and player_rect.right >= config.SCREEN_WIDTH:
+            print("Transitioning from streets (right) to palace")
+            self.load_map('palace')
+            self.player.rect.left = buffer
+            self.player.hitbox.center = self.player.rect.center
 
 
     def run(self) -> None:

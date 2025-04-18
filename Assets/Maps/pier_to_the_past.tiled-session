@@ -20,7 +20,7 @@
         "PathAndObjects.tsx": {
             "dynamicWrapping": false,
             "scaleInDock": 1,
-            "scaleInEditor": 1
+            "scaleInEditor": 3
         },
         "grass.tsx": {
             "scaleInDock": 1,
@@ -48,11 +48,11 @@
             }
         },
         "pier_map.tmx": {
-            "scale": 0.68578125,
+            "scale": 1,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 480.4739120528595,
-                "y": 463.70471633629523
+                "x": 370.5,
+                "y": 313
             }
         },
         "sea.tmx": {
@@ -69,11 +69,11 @@
             "scaleInEditor": 1
         },
         "streets_map.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 0,
+            "scale": 4,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 490,
-                "y": 370.6666666666667
+                "x": 595.875,
+                "y": 430.5
             }
         },
         "trees-and-bushes.tsx": {
@@ -88,17 +88,17 @@
     ],
     "project": "pier_to_the_past.tiled-project",
     "recentFiles": [
-        "palace_map.tmx",
-        "sea.tmx",
+        "PathAndObjects.tsx",
         "pier_map.tmx",
+        "palace_map.tmx",
+        "House.tsx",
+        "Ocean_SpriteSheet.tsx",
+        "sea.tmx",
         "streets_map.tmx",
         "mayorsHouse.tmx",
-        "Ocean_SpriteSheet.tsx",
-        "House.tsx",
         "signposts.tsx",
         "grass.tsx",
         "trees-and-bushes.tsx",
-        "PathAndObjects.tsx",
         "palace.tsx"
     ]
 }
