@@ -24,13 +24,17 @@ class Game:
 
         # Initialize sprites using classes from sprites.py
         # Define starting positions (could also come from map data later)
-        player_start_x = 100
-        player_start_y = 50
+        player_start_x = 700
+        player_start_y = 200
         self.player = sprites.Player(player_start_x, player_start_y)
 
         # Example: Place Piermaster based on config or map data later
-        piermaster_start_x = config.SCREEN_WIDTH // 4
-        piermaster_start_y = config.SCREEN_HEIGHT // 2
+        #piermaster_start_x = config.SCREEN_WIDTH // 4
+        #piermaster_start_y = config.SCREEN_HEIGHT // 2
+
+        piermaster_start_x = 500
+        piermaster_start_y = 400
+
         self.piermaster = sprites.Piermaster(piermaster_start_x, piermaster_start_y)
 
         # Load initial map using key from config
