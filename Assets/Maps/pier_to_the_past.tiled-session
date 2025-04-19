@@ -37,6 +37,10 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "mayor.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
         "mayor1.tsx": {
             "scaleInDock": 2,
             "scaleInEditor": 8
@@ -49,6 +53,9 @@
                 "y": 407.7562326869807
             }
         },
+        "obj_misk_atlas.tsx": {
+            "dynamicWrapping": false
+        },
         "palace.tsx": {
             "dynamicWrapping": false,
             "scaleInDock": 1,
@@ -58,8 +65,8 @@
             "scale": 0.5,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 693,
-                "y": 780
+                "x": 691,
+                "y": 244
             }
         },
         "pier2.tsx": {
@@ -71,11 +78,11 @@
             "scaleInDock": 1
         },
         "pier_map.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 0,
+            "scale": 0.25,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 673,
-                "y": 512
+                "x": 700,
+                "y": 320
             }
         },
         "sea.tmx": {
@@ -92,11 +99,11 @@
             "scaleInEditor": 1
         },
         "streets_map.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 1,
+            "scale": 1,
+            "selectedLayer": -1,
             "viewCenter": {
-                "x": 1183,
-                "y": 626
+                "x": 532.5,
+                "y": 429
             }
         },
         "trees-and-bushes.tsx": {
@@ -106,24 +113,24 @@
         }
     },
     "last.externalTilesetPath": "//synology/sharedDrive/CALLUM/EDUCATION/2022-2025 Brighton University/3-YEAR THREE/CI601 The Computing Project/GAME DEVELOPMENT/Master/Assets/Maps",
-    "last.imagePath": "//synology/sharedDrive/CALLUM/EDUCATION/2022-2025 Brighton University/3-YEAR THREE/CI601 The Computing Project/GAME DEVELOPMENT/Master/Assets/Images",
+    "last.imagePath": "/synology/sharedDrive/CALLUM/EDUCATION/2022-2025 Brighton University/3-YEAR THREE/CI601 The Computing Project/GAME DEVELOPMENT/Master/Assets/Images",
     "map.lastUsedFormat": "tmx",
     "openFiles": [
     ],
     "project": "pier_to_the_past.tiled-project",
     "recentFiles": [
-        "palace_map.tmx",
-        "mayorsHouse.tmx",
-        "streets_map.tmx",
-        "grass.tsx",
+        "mayor.tsx",
+        "pier_map.tmx",
         "build_atlas.tsx",
         "sea.tmx",
+        "palace_map.tmx",
+        "streets_map.tmx",
+        "mayorsHouse.tmx",
+        "grass.tsx",
         "AnimatedDoor.tsx",
-        "pier_map.tmx",
         "mayor1.tsx",
         "PathAndObjects.tsx",
-        "House.tsx",
-        "Ocean_SpriteSheet.tsx"
+        "House.tsx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx",
