@@ -1,9 +1,13 @@
 {
-    "activeFile": "sea.tmx",
+    "activeFile": "",
     "expandedProjectPaths": [
         "."
     ],
     "fileStates": {
+        "AnimatedDoor.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
         "House.tsx": {
             "dynamicWrapping": false,
             "scaleInDock": 1,
@@ -23,16 +27,26 @@
             "scaleInDock": 1,
             "scaleInEditor": 3
         },
-        "grass.tsx": {
+        "build_atlas.tsx": {
+            "dynamicWrapping": true,
             "scaleInDock": 1,
             "scaleInEditor": 1
+        },
+        "grass.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "mayor1.tsx": {
+            "scaleInDock": 2,
+            "scaleInEditor": 8
         },
         "mayorsHouse.tmx": {
             "scale": 0.9025,
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 480.33240997229916,
-                "y": 407.75623268698064
+                "y": 407.7562326869807
             }
         },
         "palace.tsx": {
@@ -41,27 +55,35 @@
             "scaleInEditor": 2
         },
         "palace_map.tmx": {
-            "scale": 0.75,
-            "selectedLayer": 1,
+            "scale": 0.5,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 570,
-                "y": 364
+                "x": 693,
+                "y": 780
             }
         },
+        "pier2.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1
+        },
+        "pier3.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1
+        },
         "pier_map.tmx": {
-            "scale": 1,
-            "selectedLayer": 4,
+            "scale": 0.5,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 370.5,
-                "y": 313
+                "x": 673,
+                "y": 512
             }
         },
         "sea.tmx": {
-            "scale": 1,
-            "selectedLayer": 4,
+            "scale": 0.75,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 394.5,
-                "y": 267
+                "x": 454,
+                "y": 262.6666666666667
             }
         },
         "signposts.tsx": {
@@ -70,14 +92,15 @@
             "scaleInEditor": 1
         },
         "streets_map.tmx": {
-            "scale": 1.5,
+            "scale": 0.5,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 705.6666666666667,
-                "y": 298
+                "x": 1183,
+                "y": 626
             }
         },
         "trees-and-bushes.tsx": {
+            "dynamicWrapping": false,
             "scaleInDock": 1,
             "scaleInEditor": 1
         }
@@ -86,22 +109,26 @@
     "last.imagePath": "//synology/sharedDrive/CALLUM/EDUCATION/2022-2025 Brighton University/3-YEAR THREE/CI601 The Computing Project/GAME DEVELOPMENT/Master/Assets/Images",
     "map.lastUsedFormat": "tmx",
     "openFiles": [
-        "sea.tmx",
-        "streets_map.tmx"
     ],
     "project": "pier_to_the_past.tiled-project",
     "recentFiles": [
-        "streets_map.tmx",
-        "sea.tmx",
-        "PathAndObjects.tsx",
-        "pier_map.tmx",
         "palace_map.tmx",
-        "House.tsx",
-        "Ocean_SpriteSheet.tsx",
         "mayorsHouse.tmx",
-        "signposts.tsx",
+        "streets_map.tmx",
         "grass.tsx",
-        "trees-and-bushes.tsx",
-        "palace.tsx"
-    ]
+        "build_atlas.tsx",
+        "sea.tmx",
+        "AnimatedDoor.tsx",
+        "pier_map.tmx",
+        "mayor1.tsx",
+        "PathAndObjects.tsx",
+        "House.tsx",
+        "Ocean_SpriteSheet.tsx"
+    ],
+    "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 32,
+        "width": 32
+    }
 }

@@ -1,8 +1,8 @@
 # config.py
 
 # Game Constants
-SCREEN_WIDTH: int = 800
-SCREEN_HEIGHT: int = 600
+SCREEN_WIDTH: int = 1280
+SCREEN_HEIGHT: int = 800
 FPS: int = 60
 ZOOM_LEVEL: float = 1.0  # Use float for zoom
 DEFAULT_LAYER: int = 1
