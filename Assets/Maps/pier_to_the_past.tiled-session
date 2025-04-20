@@ -1,5 +1,5 @@
 {
-    "activeFile": "",
+    "activeFile": "palace_map.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -54,7 +54,9 @@
             }
         },
         "obj_misk_atlas.tsx": {
-            "dynamicWrapping": false
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
         },
         "palace.tsx": {
             "dynamicWrapping": false,
@@ -63,9 +65,9 @@
         },
         "palace_map.tmx": {
             "scale": 0.5,
-            "selectedLayer": 3,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 691,
+                "x": 1264,
                 "y": 244
             }
         },
@@ -78,11 +80,11 @@
             "scaleInDock": 1
         },
         "pier_map.tmx": {
-            "scale": 0.25,
-            "selectedLayer": 2,
+            "scale": 0.75,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 700,
-                "y": 320
+                "x": 515.9999999999999,
+                "y": 328
             }
         },
         "sea.tmx": {
@@ -100,9 +102,9 @@
         },
         "streets_map.tmx": {
             "scale": 1,
-            "selectedLayer": -1,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 532.5,
+                "x": 1159,
                 "y": 429
             }
         },
@@ -116,21 +118,25 @@
     "last.imagePath": "/synology/sharedDrive/CALLUM/EDUCATION/2022-2025 Brighton University/3-YEAR THREE/CI601 The Computing Project/GAME DEVELOPMENT/Master/Assets/Images",
     "map.lastUsedFormat": "tmx",
     "openFiles": [
+        "pier_map.tmx",
+        "obj_misk_atlas.tsx",
+        "palace_map.tmx",
+        "streets_map.tmx"
     ],
     "project": "pier_to_the_past.tiled-project",
     "recentFiles": [
-        "mayor.tsx",
         "pier_map.tmx",
+        "obj_misk_atlas.tsx",
+        "streets_map.tmx",
+        "palace_map.tmx",
+        "mayor.tsx",
         "build_atlas.tsx",
         "sea.tmx",
-        "palace_map.tmx",
-        "streets_map.tmx",
         "mayorsHouse.tmx",
         "grass.tsx",
         "AnimatedDoor.tsx",
         "mayor1.tsx",
-        "PathAndObjects.tsx",
-        "House.tsx"
+        "PathAndObjects.tsx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx",

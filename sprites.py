@@ -142,3 +142,39 @@ class Piermaster(pygame.sprite.Sprite):
 #     # Add update method if the Mayor needs to move or animate
 #     # def update(self, *args, **kwargs) -> None:
 #     #     pass
+
+class Mayor(pygame.sprite.Sprite):
+     """Represents the Mayor NPC."""
+     def __init__(self, x: int, y: int) -> None:
+         super().__init__()
+         try:
+             # 1. load the image file specified in config.py
+             self.image = pygame.image.load(config.MAYOR_IMAGE).convert_alpha()
+         except pygame.error as e:
+             # 3. fallback: if loading fails, create a surface with TILE_SIZE dimensions
+             print(f"Error loading mayor image: {config.MAYOR_IMAGE} - {e}")
+             self.image = pygame.Surface((config.TILE_SIZE, config.TILE_SIZE))
+             self.image.fill((0, 255, 0)) # Green square fallback
+         # 2. get a rect whose dimensions match the loaded images (self.image)    
+         self.rect = self.image.get_rect(center=(x, y))
+     # Add update method if the Mayor needs to move or animate
+     # def update(self, *args, **kwargs) -> None:
+     #     pass
+
+class CaneMale(pygame.sprite.Sprite):
+     """Represents the Old Man NPC."""
+     def __init__(self, x: int, y: int) -> None:
+         super().__init__()
+         try:
+             # 1. load the image file specified in config.py
+             self.image = pygame.image.load(config.PENSIONER_IMAGE).convert_alpha()
+         except pygame.error as e:
+             # 3. fallback: if loading fails, create a surface with TILE_SIZE dimensions
+             print(f"Error loading pensioner image: {config.MAYOR_IMAGE} - {e}")
+             self.image = pygame.Surface((config.TILE_SIZE, config.TILE_SIZE))
+             self.image.fill((0, 255, 0)) # Green square fallback
+         # 2. get a rect whose dimensions match the loaded images (self.image)    
+         self.rect = self.image.get_rect(center=(x, y))
+     # Add update method if the Mayor needs to move or animate
+     # def update(self, *args, **kwargs) -> None:
+     #     pass

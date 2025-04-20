@@ -16,6 +16,7 @@ MAPS_DIR = f'{ASSETS_DIR}/Maps'
 PIERMASTER_IMAGE: str = f'{IMAGES_DIR}/piermaster.png'
 PLAYER_IMAGE: str = f'{IMAGES_DIR}/gentleman.png'
 MAYOR_IMAGE: str = f'{IMAGES_DIR}/mayor.png' # Keep even if unused for now
+PENSIONER_IMAGE: str = f'{IMAGES_DIR}/oldmalecane.png' # Keep even if unused for now
 
 MAP_PATHS: dict[str, str] = {
     'pier': f"{MAPS_DIR}/pier_map.tmx",

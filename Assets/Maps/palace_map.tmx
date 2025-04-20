@@ -5,6 +5,7 @@
  <tileset firstgid="302" source="Ocean_SpriteSheet.tsx"/>
  <tileset firstgid="318" source="PathAndObjects.tsx"/>
  <tileset firstgid="574" source="signposts.tsx"/>
+ <tileset firstgid="583" source="obj_misk_atlas.tsx"/>
  <layer id="1" name="Pavillion" width="40" height="30">
   <data encoding="csv">
 21,21,21,21,21,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,21,21,21,

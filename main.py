@@ -55,8 +55,20 @@ class Game:
         piermaster_start_y = 400
         # Create the Piermaster instance using the Piermaster class from sprites.py
         self.piermaster = sprites.Piermaster(piermaster_start_x, piermaster_start_y)
+
         # Note: Other NPCs like the Mayor would be initialized similarly, perhaps
         # conditionally based on the starting map.
+        # initialize the mayor's starting position
+        mayor_start_x = 550
+        mayor_start_y = 450
+        self.mayor = sprites.Mayor(mayor_start_x, mayor_start_y)
+
+        # --- Initialize Shopkeeper ---
+        shopkeeper_start_x = 600 # Example coordinates
+        shopkeeper_start_y = 300
+        self.shopkeeper = sprites.Shopkeeper(shopkeeper_start_x, shopkeeper_start_y)
+
+
 
         # --- Initial Map Load ---
         # Load the starting map using its key from the config file
@@ -120,6 +132,22 @@ class Game:
                      # Fallback/Error case: Log if piermaster wasn't created earlier
                      print(f"Warning: Piermaster object not found when loading map '{map_key}'")
 
+            elif map_key == 'palace':
+                 # Only add the Mayor if the current map is 'palace'
+                 # Ensure the mayor instance exists (it should from __init__)
+                 if hasattr(self, 'mayor'):
+                     # Optional: Set a specific position for the mayor in the palace
+                     # self.mayor.rect.center = (config.MAYOR_PALACE_X, config.MAYOR_PALACE_Y) # Example
+                     self.group.add(self.mayor)
+                 else:
+                     # Fallback/Error case: Log if mayor wasn't created earlier
+                     print(f"Warning: Mayor object not found when loading map '{map_key}'")
+
+
+
+
+
+
             # Example: Add other map-specific sprites
             # elif map_key == 'palace':
             #    # Assuming a Mayor sprite exists and its position is known/loaded
@@ -135,7 +163,7 @@ class Game:
             print(f"Map '{map_key}' loaded successfully.")
 
         # --- Robust Error Handling for Map Loading ---
-        except (KeyError, FileNotFoundError, ValueError, pytmx.TmxMapError, pygame.error, Exception) as e:
+        except (KeyError, FileNotFoundError, ValueError, pygame.error, Exception) as e: # Removed pytmx.TmxMapError
             # Catch specific expected errors (file not found, invalid key, Tiled issues)
             # and general exceptions during the complex loading process.
             print(f"Error loading map '{map_key}': {type(e).__name__} - {e}")
@@ -144,6 +172,7 @@ class Game:
             # traceback.print_exc()
             # Stop the game if a map fails to load, as it's likely critical
             self.running = False
+
 
     def handle_map_transitions(self) -> None:
         """
