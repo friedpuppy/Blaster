@@ -63,10 +63,23 @@ class Game:
         mayor_start_y = 450
         self.mayor = sprites.Mayor(mayor_start_x, mayor_start_y)
 
-        # --- Initialize Shopkeeper ---
-        shopkeeper_start_x = 600 # Example coordinates
-        shopkeeper_start_y = 300
-        self.shopkeeper = sprites.Shopkeeper(shopkeeper_start_x, shopkeeper_start_y)
+        # --- Initialize Multiple Houseowner Instances ---
+        # Use different coordinates and potentially different image paths from config
+        # Make sure the image files referenced in config (e.g., houseowner_type1.png) exist!
+        # If they don't exist yet, you can point them all to config.HOUSEOWNER_DEFAULT_IMAGE for now.
+        try:
+            self.houseowner = sprites.Houseowner(800, 350, config.HOUSEOWNER_DEFAULT_IMAGE)
+            self.houseowner1 = sprites.Houseowner(600, 300, config.HOUSEOWNER_ONE_IMAGE)
+            self.houseowner2 = sprites.Houseowner(750, 500, config.HOUSEOWNER_TWO_IMAGE)
+            # Add more instances as needed
+            # self.houseowner3 = sprites.Houseowner(800, 350, config.HOUSEOWNER_THREE_IMAGE)
+        except AttributeError as e:
+             print(f"Error initializing Houseowners: Make sure image constants like "
+                   f"'HOUSEOWNER_ONE_IMAGE' are defined in config.py. Details: {e}")
+             # Handle this error appropriately, maybe set them to None or stop the game
+             self.houseowner1 = None
+             self.houseowner2 = None
+             # self.houseowner3 = None
 
 
 
@@ -143,7 +156,35 @@ class Game:
                      # Fallback/Error case: Log if mayor wasn't created earlier
                      print(f"Warning: Mayor object not found when loading map '{map_key}'")
 
+            elif map_key == 'streets':
+                 # Add the specific houseowner instances you want on the streets map
+                 print(f"Checking for houseowners on map '{map_key}'...") # Debug print
+                 if hasattr(self, 'houseowner1') and self.houseowner1:
+                     print("Adding houseowner1 to streets map.") # Debug print
+                     self.group.add(self.houseowner1)
+                 else:
+                     print(f"Warning: Houseowner1 object not found or not initialized when loading map '{map_key}'")
 
+                 if hasattr(self, 'houseowner2') and self.houseowner2:
+                     print("Adding houseowner2 to streets map.") # Debug print
+                     self.group.add(self.houseowner2)
+                 else:
+                     print(f"Warning: Houseowner2 object not found or not initialized when loading map '{map_key}'")
+
+                 if hasattr(self, 'houseowner') and self.houseowner:
+                     print("Adding houseowner to streets map.") # Debug print
+                     self.group.add(self.houseowner)
+                 else:
+                     print(f"Warning: Houseowner object not found or not initialized when loading map '{map_key}'")
+
+            # Update the tracking variable
+            self.current_map_key = map_key
+            print(f"Map '{map_key}' loaded successfully.")
+
+        # --- Robust Error Handling ---
+        except (KeyError, FileNotFoundError, ValueError, pygame.error, Exception) as e:
+            print(f"Error loading map '{map_key}': {type(e).__name__} - {e}")
+            self.running = False
 
 
 

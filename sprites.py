@@ -161,20 +161,26 @@ class Mayor(pygame.sprite.Sprite):
      # def update(self, *args, **kwargs) -> None:
      #     pass
 
-class CaneMale(pygame.sprite.Sprite):
-     """Represents the Old Man NPC."""
-     def __init__(self, x: int, y: int) -> None:
+class Houseowner(pygame.sprite.Sprite):
+     """
+     Represents a generic Houseowner NPC.
+     Can be instantiated with different images and positions.
+     """
+     # Add image_path parameter with a default fallback (optional)
+     def __init__(self, x: int, y: int, image_path: str = config.HOUSEOWNER_IMAGE) -> None:
          super().__init__()
          try:
-             # 1. load the image file specified in config.py
-             self.image = pygame.image.load(config.PENSIONER_IMAGE).convert_alpha()
+             # Load the image file specified by the image_path parameter
+             self.image = pygame.image.load(image_path).convert_alpha()
          except pygame.error as e:
-             # 3. fallback: if loading fails, create a surface with TILE_SIZE dimensions
-             print(f"Error loading pensioner image: {config.MAYOR_IMAGE} - {e}")
+             # Fallback: if loading fails, create a surface with TILE_SIZE dimensions
+             print(f"Error loading Houseowner image: {image_path} - {e}")
              self.image = pygame.Surface((config.TILE_SIZE, config.TILE_SIZE))
-             self.image.fill((0, 255, 0)) # Green square fallback
-         # 2. get a rect whose dimensions match the loaded images (self.image)    
+             # Use a different fallback color to distinguish from Mayor, e.g., purple
+             self.image.fill((128, 0, 128)) # Purple square fallback
+         # Get a rect whose dimensions match the loaded image (self.image)
          self.rect = self.image.get_rect(center=(x, y))
-     # Add update method if the Mayor needs to move or animate
+
+     # Add update method if Houseowner needs to move or animate later
      # def update(self, *args, **kwargs) -> None:
      #     pass
