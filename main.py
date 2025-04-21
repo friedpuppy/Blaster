@@ -13,7 +13,7 @@ import pygame
 import pytmx # For loading Tiled map files (.tmx)
 import pyscroll # For rendering Tiled maps efficiently
 from pytmx.util_pygame import load_pygame # Pygame-specific Tiled loader utility
-from typing import Optional # Used for type hinting optional attributes
+from typing import Optional, Dict # Used for type hinting optional attributes
 
 # Import from our custom modules
 import config  # Game configuration variables
@@ -40,6 +40,17 @@ class Game:
         self.tmx_data: Optional[pytmx.TiledMap] = None # Holds the loaded Tiled map data
         self.map_layer: Optional[pyscroll.BufferedRenderer] = None # Renderer for the map visuals
         self.group: Optional[pyscroll.PyscrollGroup] = None # Sprite group managed by pyscroll
+        self.last_event_tile_type: Optional[str] = None # <<< ADD THIS LINE
+
+        # --- Font Initialization for UI ---
+        # Use None for the default system font, or provide a path to a .ttf file
+        # e.g., pygame.font.Font("path/to/your/font.ttf", 30)
+        try:
+            self.ui_font = pygame.font.Font(None, 30) # Size 30 default font
+            print("UI Font initialized.")
+        except pygame.error as e:
+            print(f"Error initializing UI font: {e}")
+            self.ui_font = None # Set to None if font loading fails
 
         # --- Player Initialization ---
         # Define the player's starting position (could be loaded from map data later)
@@ -72,14 +83,15 @@ class Game:
             self.houseowner1 = sprites.Houseowner(650, 105, config.HOUSEOWNER_ONE_IMAGE)
             self.houseowner2 = sprites.Houseowner(920, 105, config.HOUSEOWNER_TWO_IMAGE)
             # Add more instances as needed
-            # self.houseowner3 = sprites.Houseowner(800, 350, config.HOUSEOWNER_THREE_IMAGE)
+            self.houseowner3 = sprites.Houseowner(350, 105, config.HOUSEOWNER_THREE_IMAGE)
         except AttributeError as e:
              print(f"Error initializing Houseowners: Make sure image constants like "
                    f"'HOUSEOWNER_ONE_IMAGE' are defined in config.py. Details: {e}")
              # Handle this error appropriately, maybe set them to None or stop the game
+             self.houseowner = None # Ensure they are None if init fails
              self.houseowner1 = None
              self.houseowner2 = None
-             # self.houseowner3 = None
+             self.houseowner3 = None
 
 
 
@@ -176,6 +188,12 @@ class Game:
                      self.group.add(self.houseowner)
                  else:
                      print(f"Warning: Houseowner object not found or not initialized when loading map '{map_key}'")
+                
+                 if hasattr(self, 'houseowner3') and self.houseowner3:
+                     print("Adding houseowner3 to streets map.") # Debug print
+                     self.group.add(self.houseowner)
+                 else:
+                    print(f"Warning: Houseowner3 object not found or not initialized when loading map '{map_key}'")
 
             # Update the tracking variable
             self.current_map_key = map_key
@@ -213,6 +231,72 @@ class Game:
             # traceback.print_exc()
             # Stop the game if a map fails to load, as it's likely critical
             self.running = False
+
+    # --- NEW METHOD to check for event tiles ---
+    def check_tile_events(self) -> None:
+        """Checks if the player is standing on a tile with an 'EventType' property."""
+        # Only run this check on the 'streets' map and if data is loaded
+        if self.current_map_key != 'streets' or not self.tmx_data or not self.player:
+            return
+
+        # --- Determine the layer index containing the event tiles ---
+        event_layer_index: Optional[int] = None
+        event_layer_name = "EventsMap" # <<< CHANGE THIS to the actual name in Tiled
+        try:
+            # Find layer by name (more robust if layer order might change)
+            event_layer = self.tmx_data.get_layer_by_name(event_layer_name)
+            event_layer_index = self.tmx_data.layers.index(event_layer)
+        except ValueError:
+            # print(f"Warning: Layer '{event_layer_name}' not found in streets map.")
+            return # Stop if the layer doesn't exist
+
+        # Ensure we found a valid layer index
+        if event_layer_index is None:
+            return
+
+        # Get the player's current position in terms of map tiles
+        # Using the center of the player's hitbox is often good
+        try:
+            # Consider using midbottom if you want detection based on feet
+            # tile_x = self.player.hitbox.midbottomx // config.TILE_SIZE
+            # tile_y = self.player.hitbox.midbottomy // config.TILE_SIZE
+            tile_x = self.player.hitbox.centerx // config.TILE_SIZE
+            tile_y = self.player.hitbox.centery // config.TILE_SIZE
+        except AttributeError: # Player or hitbox might not be ready
+            return
+
+        # Get the properties of the tile the player is currently standing on
+        current_tile_properties: Optional[Dict] = None
+        try:
+            # Check map bounds before getting properties
+            if 0 <= tile_x < self.tmx_data.width and 0 <= tile_y < self.tmx_data.height:
+                 current_tile_properties = self.tmx_data.get_tile_properties(
+                     tile_x, tile_y, event_layer_index
+                 )
+            # else: player is outside map bounds
+        except ValueError:
+            # This can happen if coordinates are somehow invalid for the layer
+            # print(f"Warning: Invalid coordinates ({tile_x}, {tile_y}) for layer {event_layer_index}")
+            pass # Treat as no properties found
+
+        # Extract the EventType property, if it exists
+        current_door_value: Optional[str] = None
+        if current_tile_properties and 'Door' in current_tile_properties:
+            current_door_value = current_tile_properties['Door']
+
+        # --- Trigger the event only if it's a NEW event tile ---
+        if current_door_value is not None and current_door_value != self.last_event_tile_type:
+            # Player has entered a tile with an EventType they weren't on last frame
+            print(f"Player entered event tile: {current_door_value}") # <<< Your desired print statement
+            # You could add more specific actions here based on the value:
+            # if current_event_type == "Event1":
+            #     # Do something specific for Event1
+            # elif current_event_type == "Event2":
+            #     # Do something specific for Event2
+            # etc.
+
+        # Update the 'last seen' event tile type for the next frame's comparison
+        self.last_event_tile_type = current_door_value
 
 
     def handle_map_transitions(self) -> None:
@@ -295,10 +379,13 @@ class Game:
             # 2. Update State: Update sprite positions, animations, game logic
             self.update(dt) # Pass delta time to the update method
 
-            # 3. Check Transitions: See if map change is needed after updates
+            # 3. Something
+            self.check_tile_events() # <<< MAKE SURE THIS CALL IS PRESENT
+
+            # 4. Check Transitions: See if map change is needed after updates
             self.handle_map_transitions()
 
-            # 4. Draw Frame: Render the current scene to the screen
+            # 5. Draw Frame: Render the current scene to the screen
             self.draw()
 
         print("Exiting game loop.") # Message indicating the loop has ended normally
@@ -360,12 +447,35 @@ class Game:
             # to the map.
             self.group.draw(self.screen)
 
-            # 3. Optional: Draw UI elements (HUD, menus, debug info) on top.
-            # These are drawn after the map/sprites so they appear over them.
-            # Example:
-            # font = pygame.font.Font(None, 30)
-            # fps_text = font.render(f"FPS: {self.clock.get_fps():.1f}", True, (255, 255, 255))
-            # self.screen.blit(fps_text, (10, 10))
+            # --- DEBUG: Draw Player Hitbox ---
+            # Draw a red rectangle representing the player's hitbox
+            # Make sure self.player exists before trying to draw its hitbox
+            # if self.player:
+            #     pygame.draw.rect(self.screen, (255, 0, 0), self.player.hitbox, 2) # Red outline, 2px thick
+            # --- END DEBUG ---
+
+            # --- Draw UI Elements ---
+            # 3.  Check if the font was successfully initialized
+            if self.ui_font:
+                # Render the FPS counter text
+                # Format the FPS to one decimal place (e.g., 59.8)
+                fps_text_surface = self.ui_font.render(
+                    f"", # The text string
+                    True,                               # Anti-aliasing enabled
+                    (255, 255, 255)                     # Text color (white)
+                    # Optional: Background color (None for transparent)
+                )
+                # Blit the rendered text surface onto the screen at position (10, 10)
+                self.screen.blit(fps_text_surface, (10, 10))
+
+                # --- Add more UI elements here if needed ---
+                # Example: Display current map name
+                # map_text_surface = self.ui_font.render(
+                #     f"Map: {self.current_map_key}", True, (255, 255, 255)
+                # )
+                # self.screen.blit(map_text_surface, (10, 40)) # Position below FPS
+
+            # --- END UI Elements ---
 
             # 4. Update the full display surface to show the newly drawn frame.
             pygame.display.flip()

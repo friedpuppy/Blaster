@@ -21,6 +21,7 @@ HOUSEOWNER_IMAGE: str = f'{IMAGES_DIR}/houseowner.png'
 HOUSEOWNER_DEFAULT_IMAGE: str = f'{IMAGES_DIR}/houseowner.png' # A general one if needed
 HOUSEOWNER_ONE_IMAGE: str = f'{IMAGES_DIR}/houseowner1.png' # Replace with actual filename
 HOUSEOWNER_TWO_IMAGE: str = f'{IMAGES_DIR}/houseowner2.png' # Replace with actual filename
+HOUSEOWNER_THREE_IMAGE: str = f'{IMAGES_DIR}/houseowner3.png' # Replace with actual filename
 
 MAP_PATHS: dict[str, str] = {
     'pier': f"{MAPS_DIR}/pier_map.tmx",
