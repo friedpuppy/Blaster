@@ -8,6 +8,11 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "Buttons - Full Pack.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 3
+        },
         "House.tsx": {
             "dynamicWrapping": false,
             "scaleInDock": 1,
@@ -29,6 +34,11 @@
         },
         "build_atlas.tsx": {
             "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "chains1.tsx": {
+            "dynamicWrapping": false,
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
@@ -100,12 +110,20 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "streets_map copy.tmx": {
+            "scale": 0.6805859375,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 639.8898008379729,
+                "y": 480.46834643861575
+            }
+        },
         "streets_map.tmx": {
-            "scale": 1,
+            "scale": 4,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 975,
-                "y": 550
+                "x": 137.125,
+                "y": 107.5
             }
         },
         "trees-and-bushes.tsx": {
@@ -122,18 +140,18 @@
     "project": "pier_to_the_past.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "Buttons - Full Pack.tsx",
+        "streets_map copy.tmx",
+        "grass.tsx",
+        "chains1.tsx",
+        "build_atlas.tsx",
         "pier_map.tmx",
         "obj_misk_atlas.tsx",
         "streets_map.tmx",
         "palace_map.tmx",
         "mayor.tsx",
-        "build_atlas.tsx",
         "sea.tmx",
-        "mayorsHouse.tmx",
-        "grass.tsx",
-        "AnimatedDoor.tsx",
-        "mayor1.tsx",
-        "PathAndObjects.tsx"
+        "mayorsHouse.tmx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx",

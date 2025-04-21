@@ -75,20 +75,21 @@ class Game:
         self.mayor = sprites.Mayor(mayor_start_x, mayor_start_y)
 
         # --- Initialize Multiple Houseowner Instances ---
+        # first number is left to right, second is up and down
         # Use different coordinates and potentially different image paths from config
         # Make sure the image files referenced in config (e.g., houseowner_type1.png) exist!
         # If they don't exist yet, you can point them all to config.HOUSEOWNER_DEFAULT_IMAGE for now.
         try:
-            self.houseowner = sprites.Houseowner(350, 105, config.HOUSEOWNER_DEFAULT_IMAGE)
-            self.houseowner1 = sprites.Houseowner(650, 105, config.HOUSEOWNER_ONE_IMAGE)
-            self.houseowner2 = sprites.Houseowner(920, 105, config.HOUSEOWNER_TWO_IMAGE)
-            # Add more instances as needed
-            self.houseowner3 = sprites.Houseowner(350, 105, config.HOUSEOWNER_THREE_IMAGE)
+            self.houseowner0 = sprites.Houseowner(100, 105, config.HOUSEOWNER_DEFAULT_IMAGE)
+            self.houseowner1 = sprites.Houseowner(350, 105, config.HOUSEOWNER_ONE_IMAGE)
+            self.houseowner2 = sprites.Houseowner(650, 105, config.HOUSEOWNER_TWO_IMAGE)
+            self.houseowner3 = sprites.Houseowner(920, 105, config.HOUSEOWNER_THREE_IMAGE)
+            
         except AttributeError as e:
              print(f"Error initializing Houseowners: Make sure image constants like "
                    f"'HOUSEOWNER_ONE_IMAGE' are defined in config.py. Details: {e}")
              # Handle this error appropriately, maybe set them to None or stop the game
-             self.houseowner = None # Ensure they are None if init fails
+             self.houseowner0 = None # Ensure they are None if init fails
              self.houseowner1 = None
              self.houseowner2 = None
              self.houseowner3 = None
@@ -183,15 +184,15 @@ class Game:
                  else:
                      print(f"Warning: Houseowner2 object not found or not initialized when loading map '{map_key}'")
 
-                 if hasattr(self, 'houseowner') and self.houseowner:
-                     print("Adding houseowner to streets map.") # Debug print
-                     self.group.add(self.houseowner)
+                 if hasattr(self, 'houseowner0') and self.houseowner0:
+                     print("Adding houseowner0 to streets map.") # Debug print
+                     self.group.add(self.houseowner0)
                  else:
                      print(f"Warning: Houseowner object not found or not initialized when loading map '{map_key}'")
                 
                  if hasattr(self, 'houseowner3') and self.houseowner3:
                      print("Adding houseowner3 to streets map.") # Debug print
-                     self.group.add(self.houseowner)
+                     self.group.add(self.houseowner3)
                  else:
                     print(f"Warning: Houseowner3 object not found or not initialized when loading map '{map_key}'")
 
