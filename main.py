@@ -68,9 +68,9 @@ class Game:
         # Make sure the image files referenced in config (e.g., houseowner_type1.png) exist!
         # If they don't exist yet, you can point them all to config.HOUSEOWNER_DEFAULT_IMAGE for now.
         try:
-            self.houseowner = sprites.Houseowner(800, 350, config.HOUSEOWNER_DEFAULT_IMAGE)
-            self.houseowner1 = sprites.Houseowner(600, 300, config.HOUSEOWNER_ONE_IMAGE)
-            self.houseowner2 = sprites.Houseowner(750, 500, config.HOUSEOWNER_TWO_IMAGE)
+            self.houseowner = sprites.Houseowner(350, 105, config.HOUSEOWNER_DEFAULT_IMAGE)
+            self.houseowner1 = sprites.Houseowner(650, 105, config.HOUSEOWNER_ONE_IMAGE)
+            self.houseowner2 = sprites.Houseowner(920, 105, config.HOUSEOWNER_TWO_IMAGE)
             # Add more instances as needed
             # self.houseowner3 = sprites.Houseowner(800, 350, config.HOUSEOWNER_THREE_IMAGE)
         except AttributeError as e:
