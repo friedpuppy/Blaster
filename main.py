@@ -1,6 +1,6 @@
 # main.py
 # Author: Callum Donnelly
-# Date: 2025-04-19 (or update to current date)
+# Date: 2025-04-23 (or update to current date)
 # Description: Main entry point for the game. Initializes Pygame,
 #              manages the game loop, handles map loading and transitions,
 #              and coordinates updates and drawing of game elements.
