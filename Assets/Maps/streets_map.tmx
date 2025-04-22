@@ -5,7 +5,6 @@
  <tileset firstgid="101" source="PathAndObjects.tsx"/>
  <tileset firstgid="357" source="build_atlas.tsx"/>
  <tileset firstgid="1381" source="Buttons - Full Pack.tsx"/>
- <tileset firstgid="1765" source="Buttons - Full Pack.tsx"/>
  <layer id="4" name="Background2" width="40" height="30">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

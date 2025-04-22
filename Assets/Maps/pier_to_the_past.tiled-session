@@ -1,5 +1,5 @@
 {
-    "activeFile": "Buttons - Full Pack.tsx",
+    "activeFile": "streets_map.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -142,8 +142,8 @@
     "project": "pier_to_the_past.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "streets_map.tmx",
         "Buttons - Full Pack.tsx",
+        "streets_map.tmx",
         "streets_map copy.tmx",
         "grass.tsx",
         "chains1.tsx",

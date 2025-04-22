@@ -16,4 +16,14 @@
    <property name="Door" value="houseowner2"/>
   </properties>
  </tile>
+ <tile id="54">
+  <properties>
+   <property name="Door" value="houseowner3"/>
+  </properties>
+ </tile>
+ <tile id="56">
+  <properties>
+   <property name="Door" value="houseowner4"/>
+  </properties>
+ </tile>
 </tileset>
