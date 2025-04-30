@@ -57,7 +57,7 @@
         },
         "mayorsHouse.tmx": {
             "scale": 0.9025,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
                 "x": 480.33240997229916,
                 "y": 407.7562326869807
@@ -75,10 +75,10 @@
         },
         "palace_map.tmx": {
             "scale": 0.5,
-            "selectedLayer": 1,
+            "selectedLayer": 2,
             "viewCenter": {
-                "x": 1264,
-                "y": 244
+                "x": 783,
+                "y": 418
             }
         },
         "pier2.tsx": {
@@ -89,17 +89,25 @@
             "dynamicWrapping": false,
             "scaleInDock": 1
         },
-        "pier_map.tmx": {
-            "scale": 0.75,
+        "pier_map - Copy.tmx": {
+            "scale": 0.9074479166666666,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 1086.6666666666665,
-                "y": 572
+                "x": 479.9173506284797,
+                "y": 319.5775698788957
+            }
+        },
+        "pier_map.tmx": {
+            "scale": 0.75,
+            "selectedLayer": 6,
+            "viewCenter": {
+                "x": 972.6666666666666,
+                "y": 553.3333333333334
             }
         },
         "sea.tmx": {
             "scale": 0.75,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
                 "x": 454,
                 "y": 262.6666666666667
@@ -119,11 +127,11 @@
             }
         },
         "streets_map.tmx": {
-            "scale": 2,
+            "scale": 0.5,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 179.25,
-                "y": 119
+                "x": 479,
+                "y": 526
             }
         },
         "trees-and-bushes.tsx": {
@@ -142,9 +150,10 @@
     "project": "pier_to_the_past.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "streets_map copy.tmx",
+        "pier_map - Copy.tmx",
         "streets_map.tmx",
         "Buttons - Full Pack.tsx",
-        "streets_map copy.tmx",
         "grass.tsx",
         "chains1.tsx",
         "build_atlas.tsx",
@@ -152,8 +161,7 @@
         "obj_misk_atlas.tsx",
         "palace_map.tmx",
         "mayor.tsx",
-        "sea.tmx",
-        "mayorsHouse.tmx"
+        "sea.tmx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx",

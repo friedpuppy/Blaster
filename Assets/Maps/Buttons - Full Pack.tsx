@@ -3,6 +3,7 @@
  <image source="../Images/Buttons - Full Pack.png" width="256" height="1536"/>
  <tile id="48">
   <properties>
+   <property name="CutsceneTrigger" value="houseowner0_cutscene"/>
    <property name="Door" value="houseowner0"/>
   </properties>
  </tile>

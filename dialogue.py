@@ -1,3 +1,4 @@
+# dialogue.py
 import pygame
 from config import * # Assuming config defines colors like WHITE, BLACK, DARK_GRAY etc.
 # from sprites import * # Assuming sprites isn't strictly needed for DialogueBox itself
@@ -36,65 +37,77 @@ def render_textrect(string, font, rect, text_color, background_color, justificat
     final_lines = []
     requested_lines = string.splitlines()
 
+    # --- Word Wrapping Logic ---
     for requested_line in requested_lines:
         if font.size(requested_line)[0] > rect.width:
             words = requested_line.split(' ')
+            # Check for words longer than the line width
             for word in words:
                 if font.size(word)[0] >= rect.width:
                     raise TextRectException(
                         f"The word '{word}' is too long ({font.size(word)[0]}px) to fit in the rect width ({rect.width}px)."
                     )
+            # Wrap words to fit the line
             accumulated_line = ""
             for word in words:
                 test_line = accumulated_line + word + " "
+                # Check if the test line fits within the width
                 if font.size(test_line)[0] < rect.width:
                     accumulated_line = test_line
                 else:
-                    final_lines.append(accumulated_line.rstrip()) # Remove trailing space
-                    accumulated_line = word + " "
-            final_lines.append(accumulated_line.rstrip()) # Remove trailing space
+                    final_lines.append(accumulated_line.rstrip()) # Add the previous line
+                    accumulated_line = word + " " # Start a new line
+            final_lines.append(accumulated_line.rstrip()) # Add the last accumulated line
         else:
-            final_lines.append(requested_line)
+            final_lines.append(requested_line) # Line fits without wrapping
 
-    surface = pygame.Surface(rect.size, pygame.SRCALPHA) # Use SRCALPHA for potential transparency
-    surface.fill(background_color) # Fill only if needed, or make transparent
+    # --- Surface Creation and Text Rendering ---
+    surface = pygame.Surface(rect.size, pygame.SRCALPHA) # Use SRCALPHA for transparency
+    surface.fill(background_color) # Fill background
 
     accumulated_height = 0
-    line_spacing = font.get_linesize() # More reliable than font.size()[1]
+    line_spacing = font.get_linesize() # Use font's line spacing
 
-    for line in final_lines:
-        if accumulated_height + line_spacing > rect.height: # Check before rendering
-             # Allow text to be cut off instead of raising an error?
-             # Or maybe render an indicator like "..."
+    for i, line in enumerate(final_lines):
+        if accumulated_height + line_spacing > rect.height:
+            # Optional: Add an indicator like "..." if text overflows vertically
+            # if i > 0: # Check if there was at least one previous line
+            #     prev_line_surf = surface.copy() # Keep previous state
+            #     ellipsis_surf = font.render("...", True, text_color)
+            #     ellipsis_rect = ellipsis_surf.get_rect(bottomright=(rect.width, accumulated_height))
+            #     # Blit ellipsis slightly overlapping the last visible line's bottom
+            #     surface.blit(ellipsis_surf, ellipsis_rect)
+
             print(f"Warning: Text truncated. Content height ({accumulated_height + line_spacing}px) exceeds rect height ({rect.height}px).")
             break # Stop rendering lines that won't fit
-            # raise TextRectException(f"Once word-wrapped, the text string was too tall ({accumulated_height + line_spacing}px) to fit in the rect height ({rect.height}px).")
 
         if line != "":
             try:
-                # Render with anti-aliasing (True)
-                tempsurface = font.render(line, True, text_color)
+                tempsurface = font.render(line, True, text_color) # Render with anti-aliasing
             except pygame.error as e:
                  raise TextRectException(f"Pygame font rendering error: {e}")
 
             text_width = tempsurface.get_width()
+            blit_pos_x = 0 # Default to left justification
 
-            if justification == 0: # Left
-                surface.blit(tempsurface, (0, accumulated_height))
-            elif justification == 1: # Centered
-                surface.blit(tempsurface, ((rect.width - text_width) // 2, accumulated_height))
+            # --- Justification Logic ---
+            if justification == 1: # Centered
+                blit_pos_x = (rect.width - text_width) // 2
             elif justification == 2: # Right
-                surface.blit(tempsurface, (rect.width - text_width, accumulated_height))
-            else:
+                blit_pos_x = rect.width - text_width
+            elif justification != 0: # Invalid justification
                 raise TextRectException(f"Invalid justification argument: {justification}")
 
-        accumulated_height += line_spacing # Use line spacing for consistent height
+            surface.blit(tempsurface, (blit_pos_x, accumulated_height))
+
+        accumulated_height += line_spacing # Move down for the next line
 
     return surface
 # --- End of TextRect ---
 
 
 class DialogueBox(pygame.sprite.Sprite):
+    # --- DialogueBox class remains the same ---
     def __init__(self, game, text, x, y, width=600, height=200, font_size=30, font_name='monofonto rg.otf'):
         super().__init__()
         self.game = game
@@ -109,8 +122,8 @@ class DialogueBox(pygame.sprite.Sprite):
             print(f"Warning: Font '{font_name}' not found. Using default Pygame font.")
             self.font = pygame.font.Font(None, font_size) # Use default font if specified one fails
 
-        self.text_color = WHITE # Use constants from config
-        self.background_color = BLACK
+        self.text_color = BLACK # Use constants from config
+        self.background_color = WHITE
         self.border_color = DARK_GRAY
         self.border_width = 2
         self.padding = 10
@@ -213,7 +226,7 @@ class DialogueBox(pygame.sprite.Sprite):
         """Setter for the text content that automatically updates the surface."""
         self.update_text(value)
 
-# --- Dialogue and Cutscene classes remain the same ---
+# --- Dialogue class remains the same ---
 class Dialogue:
     # ... (Dialogue class remains the same) ...
     def __init__(self, name, lines, quest_stage_advance=None, money_given=0, story_mode=False, story_lines=None):
@@ -248,11 +261,24 @@ class Dialogue:
         self.current_line = 0
         self.has_given_money = False # Reset money flag too if needed
 
+# --- Cutscene class remains largely the same, ensure it takes lists ---
 class Cutscene:
-    def __init__(self, sentences, images):
+    """Represents a sequence of images and corresponding text lines for a cutscene."""
+    def __init__(self, image_paths: list[str | None], sentences: list[str]):
+        """
+        Args:
+            image_paths (list[str | None]): A list of file paths to the images for each slide.
+                                            Use None for slides with no image (e.g., black screen).
+            sentences (list[str]): A list of text strings for each slide.
+                                   Should have the same length as image_paths.
+        """
+        if len(image_paths) != len(sentences):
+            raise ValueError("Cutscene image_paths and sentences lists must have the same length.")
+        self.image_paths = image_paths
         self.sentences = sentences
-        self.images = images
-# --- dialogues and cutscenes dictionaries remain the same ---
+        self.num_slides = len(sentences) # Store the total number of slides
+
+# --- dialogues dictionary remains the same ---
 dialogues = {
     "door_1_npc": Dialogue("Door1NPC", ["Hello! I live here."]),
     "donor1": Dialogue("Donor 1", ["Oh no, the pier is broken!", "I really hope this money helps.", "Good luck!"], quest_stage_advance="talked_to_donor1", money_given=5),
@@ -273,19 +299,56 @@ dialogues = {
     "rude_npc": Dialogue("RudeNPC", ["Go away! I don't have time for you.", "Leave me alone!"]),
 }
 
-cutscenes = {
-    "intro": Cutscene(
+# --- NEW: Dictionary for Collision-Triggered Cutscenes ---
+# The keys (e.g., "story1") MUST match the 'CutsceneTrigger' property values set in Tiled.
+collision_cutscenes: dict[str, Cutscene] = {
+    "intro_story": Cutscene( # Example key, replace with your Tiled value
+        image_paths=[
+            f'{IMAGES_DIR}/cutscenes/intro_slide_1.png', # Make sure these image files exist!
+            f'{IMAGES_DIR}/cutscenes/intro_slide_2.png',
+            f'{IMAGES_DIR}/cutscenes/intro_slide_3.png',
+            None, # Example: A slide with just text on black background
+        ],
         sentences=[
             "It is the morning of October 16th in the year of our Lord 1833. A most terrible and violent storm the night prior has left the mighty Chain Pier in a ruinous state.",
-            "The second bridge is hanging down almost touching the sea.",
-            "Only the ropes of the third bridge remain.",
-            "Work to repair it must be commenced as soon as possible, for without the Pier there would be no way to dock ships!"
-        ],
-        images=[
-            'game/img/cutscene_image_1.png',  # Image _1
-            'game/img/cutscene_image_2.png',  # Image _2
-            'game/img/cutscene_image_3.png',  # Image _3
-            None  # Black screen
+            "The second bridge is hanging down almost touching the sea, a testament to the storm's fury.",
+            "Only the twisted ropes of the third bridge remain, dangling uselessly over the churning waves.",
+            "Work to repair it must be commenced as soon as possible, for without the Pier, the town's lifeline to the sea is severed!"
         ]
-    )
+    ),
+    "another_story": Cutscene( # Example for a second trigger
+         image_paths=[
+             f'{IMAGES_DIR}/cutscenes/another_1.png',
+             f'{IMAGES_DIR}/cutscenes/another_2.png',
+         ],
+         sentences=[
+             "This is the first part of another story, triggered by a different collision.",
+             "And this is the concluding slide for that story. Press Enter to return to the game.",
+         ]
+    ),
+
+    # --- ADD THIS NEW ENTRY ---
+    "houseowner0_cutscene": Cutscene(
+        image_paths=[None], # Use None for no image (black screen)
+        sentences=["You triggered the Houseowner 0 cutscene! Press Enter to close."]
+    ),
+    # -------------------------
+
+    # Add more entries here for each 'CutsceneTrigger' value you defined in Tiled
+    # "story_trigger_3": Cutscene(...)
 }
+
+# --- Cutscene class (from original file, now potentially redundant if using collision_cutscenes) ---
+# You can keep this if you use it elsewhere, or remove it if collision_cutscenes replaces its use case.
+# class Cutscene:
+#     def __init__(self, sentences, images):
+#         self.sentences = sentences
+#         self.images = images
+
+# --- cutscenes dictionary (from original file, now potentially redundant) ---
+# Keep or remove based on whether you still need the 'intro' cutscene triggered differently.
+# cutscenes = {
+#     "intro": Cutscene(
+#         sentences=[ ... ], images=[ ... ]
+#     )
+# }

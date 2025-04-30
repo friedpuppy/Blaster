@@ -1,6 +1,6 @@
 # main.py
 # Author: Callum Donnelly
-# Date: 2025-04-24 (or update to current date)
+# Date: 2025-04-30 (or update to current date)
 # Description: Main entry point for the game. Initializes Pygame,
 #              manages the game loop, handles map loading and transitions,
 #              and coordinates updates and drawing of game elements.
@@ -8,18 +8,22 @@
 # References Local Files:
 #   - config.py: Loads game settings, constants, and file paths.
 #   - sprites.py: Uses Player and NPC sprite classes defined therein.
+#   - dialogue.py: Uses Cutscene class and collision_cutscenes data.
 
 import pygame
 import pytmx # For loading Tiled map files (.tmx)
 import pyscroll # For rendering Tiled maps efficiently
 from pytmx.util_pygame import load_pygame # Pygame-specific Tiled loader utility
-from typing import Optional, Dict # Used for type hinting optional attributes
-from dialogue import DialogueBox, dialogues # Import necessary classes/data
+from typing import Optional, Dict, List # Used for type hinting
+# Import necessary classes/data from dialogue.py
+from dialogue import DialogueBox, dialogues, Cutscene, collision_cutscenes, render_textrect, TextRectException
 
 
 # Import from our custom modules
 import config  # Game configuration variables
 import sprites # Game sprite classes (Player, NPCs, etc.)
+
+# --- TriggerSprite class is removed as it's no longer needed ---
 
 class Game:
     """
@@ -35,534 +39,470 @@ class Game:
         Args:
             screen (pygame.Surface): The main display surface provided by Pygame.
         """
-        self.screen = screen  # Store the display surface
-        self.clock = pygame.time.Clock() # Create a clock object for controlling FPS
-        self.running = True # Flag to keep the main game loop active
-        self.current_map_key: Optional[str] = None # Key (e.g., 'pier') of the currently loaded map
-        self.tmx_data: Optional[pytmx.TiledMap] = None # Holds the loaded Tiled map data
-        self.map_layer: Optional[pyscroll.BufferedRenderer] = None # Renderer for the map visuals
-        self.group: Optional[pyscroll.PyscrollGroup] = None # Sprite group managed by pyscroll
-        self.last_event_tile_type: Optional[str] = None # <<< ADD THIS LINE
+        self.screen = screen
+        self.clock = pygame.time.Clock()
+        self.running = True
+        self.current_map_key: Optional[str] = None
+        self.tmx_data: Optional[pytmx.TiledMap] = None
+        self.map_layer: Optional[pyscroll.BufferedRenderer] = None
+        self.group: Optional[pyscroll.PyscrollGroup] = None
+        # Keep track of the last tile's properties for event triggering
+        self.last_event_tile_properties: Optional[Dict] = None
 
-        # --- Font Initialization for UI ---
-        # Use None for the default system font, or provide a path to a .ttf file
-        # e.g., pygame.font.Font("path/to/your/font.ttf", 30)
+        # --- Game State ---
+        self.game_state: str = 'playing' # 'playing', 'cutscene', 'paused', etc.
+
+        # --- Cutscene State Variables ---
+        self.active_cutscene: Optional[Cutscene] = None
+        self.current_cutscene_slide: int = 0
+        self.cutscene_image_surface: Optional[pygame.Surface] = None
+        self.cutscene_text_surface: Optional[pygame.Surface] = None
+        # Removed the cutscene_triggers group
+        self.triggered_cutscenes = set() # Keep track of which cutscenes have been played (per map load)
+
+        # --- Font Initialization ---
         try:
-            self.ui_font = pygame.font.Font(None, 30) # Size 30 default font
-            print("UI Font initialized.")
+            # Font for general UI (like FPS counter)
+            self.ui_font = pygame.font.Font(None, 30)
+            # Font specifically for cutscene text (can be different)
+            self.cutscene_font = pygame.font.Font(None, 28) # Example size
+            print("UI and Cutscene Fonts initialized.")
         except pygame.error as e:
-            print(f"Error initializing UI font: {e}")
-            self.ui_font = None # Set to None if font loading fails
+            print(f"Error initializing fonts: {e}")
+            self.ui_font = None
+            self.cutscene_font = None
+            self.running = False # Stop if fonts fail
 
         # --- Player Initialization ---
-        # Define the player's starting position (could be loaded from map data later)
         player_start_x = 700
         player_start_y = 200
-        # Create the player instance using the Player class from sprites.py
         self.player = sprites.Player(player_start_x, player_start_y)
 
         # --- NPC Initialization ---
-        # Example: Define Piermaster's starting position
-        # These coordinates might eventually come from the Tiled map object layer
         piermaster_start_x = 500
         piermaster_start_y = 400
-        # Create the Piermaster instance using the Piermaster class from sprites.py
         self.piermaster = sprites.Piermaster(piermaster_start_x, piermaster_start_y)
-
-        # Note: Other NPCs like the Mayor would be initialized similarly, perhaps
-        # conditionally based on the starting map.
-        # initialize the mayor's starting position
         mayor_start_x = 550
         mayor_start_y = 450
         self.mayor = sprites.Mayor(mayor_start_x, mayor_start_y)
-
-        # --- Initialize Multiple Houseowner Instances ---
-        # first number is left to right, second is up and down
-        # Use different coordinates and potentially different image paths from config
-        # Make sure the image files referenced in config (e.g., houseowner_type1.png) exist!
-        # If they don't exist yet, you can point them all to config.HOUSEOWNER_DEFAULT_IMAGE for now.
         try:
             self.houseowner0 = sprites.Houseowner(100, 105, config.HOUSEOWNER_DEFAULT_IMAGE)
             self.houseowner1 = sprites.Houseowner(350, 105, config.HOUSEOWNER_ONE_IMAGE)
             self.houseowner2 = sprites.Houseowner(650, 105, config.HOUSEOWNER_TWO_IMAGE)
             self.houseowner3 = sprites.Houseowner(920, 105, config.HOUSEOWNER_THREE_IMAGE)
-            
         except AttributeError as e:
-             print(f"Error initializing Houseowners: Make sure image constants like "
-                   f"'HOUSEOWNER_ONE_IMAGE' are defined in config.py. Details: {e}")
-             # Handle this error appropriately, maybe set them to None or stop the game
-             self.houseowner0 = None # Ensure they are None if init fails
-             self.houseowner1 = None
-             self.houseowner2 = None
-             self.houseowner3 = None
+             print(f"Error initializing Houseowners: {e}")
+             self.houseowner0 = self.houseowner1 = self.houseowner2 = self.houseowner3 = None
 
-    # --- Dialogue Box Initialization (for testing) --- # <<< ADD THIS SECTION
-        dialogue_box_x = (config.SCREEN_WIDTH / 2) - 300 # Center horizontally (adjust width if needed)
-        dialogue_box_y = config.SCREEN_HEIGHT - 250     # Position near bottom
-        test_message = ("This is a test dialogue box. Press 'T' again to hide it. "
-                    "It should handle word wrapping automatically if the text gets long enough "
-                    "to require multiple lines within the defined box width.")
-        self.test_dialogue_box = DialogueBox(
-        self, # Pass the game instance
-        test_message,
-        dialogue_box_x,
-        dialogue_box_y,
-        width=600, # Standard width
-        height=200 # Standard height
-    )
-    # Note: It starts inactive (self.active = False) by default
-                    
+        # --- Dialogue Box Initialization (for testing/other uses) ---
+        dialogue_box_x = (config.SCREEN_WIDTH / 2) - 300
+        dialogue_box_y = config.SCREEN_HEIGHT - 250
+        test_message = "Test Dialogue Box (Press T)"
+        self.test_dialogue_box = DialogueBox(self, test_message, dialogue_box_x, dialogue_box_y)
 
         # --- Initial Map Load ---
-        # Load the starting map using its key from the config file
-        self.load_map('pier') # Start the game on the 'pier' map
+        self.load_map('pier') # Start on the pier map
 
     def load_map(self, map_key: str) -> None:
-        """
-        Loads and configures a new map based on its key defined in config.py.
-        Initializes the Tiled map data, the pyscroll renderer, and the sprite group.
-
-        Args:
-            map_key (str): The key identifying the map to load (e.g., 'pier', 'palace').
-        """
+        """Loads and configures a new map."""
         print(f"Loading map: {map_key}")
         try:
-            # Validate that the map key exists in the configuration
             if map_key not in config.MAP_PATHS:
                 raise ValueError(f"Map key '{map_key}' not found in config.MAP_PATHS")
 
-            # --- Load Tiled Map Data ---
             map_path = config.MAP_PATHS[map_key]
-            # Use pytmx utility to load the .tmx file into a Pygame-compatible format
             self.tmx_data = load_pygame(map_path)
-            # Create map data suitable for pyscroll from the loaded Tiled data
             map_data = pyscroll.TiledMapData(self.tmx_data)
 
-            # --- Configure Pyscroll Renderer ---
-            # Create a buffered renderer for efficient map drawing
             self.map_layer = pyscroll.BufferedRenderer(
-                map_data,               # The map data to render
-                self.screen.get_size(), # The size of the viewable area (screen)
-                clamp_camera=True,      # Prevent camera from going outside map boundaries
-                alpha=True              # Enable transparency support
+                map_data, self.screen.get_size(), clamp_camera=True, alpha=True
             )
-            # Set the initial zoom level from the config
             self.map_layer.zoom = config.ZOOM_LEVEL
 
-            # --- Create Pyscroll Sprite Group ---
-            # This group handles drawing sprites relative to the scrolling map
             self.group = pyscroll.PyscrollGroup(
-                map_layer=self.map_layer,       # Associate with our map renderer
-                default_layer=config.DEFAULT_LAYER # Default rendering layer for sprites
+                map_layer=self.map_layer, default_layer=config.DEFAULT_LAYER
             )
 
-            # --- Add Sprites to the Group for the New Map ---
-            # Clear previous sprites (except persistent ones like player if needed,
-            # but here we re-add player each time). A more complex setup might
-            # preserve the player instance across loads.
-            self.group.empty() # Ensure the group is clear before adding new sprites
+            # --- Clear Previous Sprites ---
+            self.group.empty()
+            # Reset triggered cutscenes for the new map
+            self.triggered_cutscenes.clear()
+            # Reset last tile properties
+            self.last_event_tile_properties = None
 
-            # Add the player sprite to the group (always present)
+            # --- Add Player ---
             self.group.add(self.player)
 
-            # Conditionally add NPCs based on the loaded map
-            if map_key == 'pier':
-                 # Only add the Piermaster if the current map is 'pier'
-                 # Ensure the piermaster instance exists (it should from __init__)
-                 if hasattr(self, 'piermaster'):
-                     self.group.add(self.piermaster)
-                 else:
-                     # Fallback/Error case: Log if piermaster wasn't created earlier
-                     print(f"Warning: Piermaster object not found when loading map '{map_key}'")
-
-            elif map_key == 'palace':
-                 # Only add the Mayor if the current map is 'palace'
-                 # Ensure the mayor instance exists (it should from __init__)
-                 if hasattr(self, 'mayor'):
-                     # Optional: Set a specific position for the mayor in the palace
-                     # self.mayor.rect.center = (config.MAYOR_PALACE_X, config.MAYOR_PALACE_Y) # Example
-                     self.group.add(self.mayor)
-                 else:
-                     # Fallback/Error case: Log if mayor wasn't created earlier
-                     print(f"Warning: Mayor object not found when loading map '{map_key}'")
-
+            # --- Add NPCs Based on Map ---
+            if map_key == 'pier' and hasattr(self, 'piermaster'):
+                self.group.add(self.piermaster)
+            elif map_key == 'palace' and hasattr(self, 'mayor'):
+                self.group.add(self.mayor)
             elif map_key == 'streets':
-                 # Add the specific houseowner instances you want on the streets map
-                 print(f"Checking for houseowners on map '{map_key}'...") # Debug print
-                 if hasattr(self, 'houseowner1') and self.houseowner1:
-                     print("Adding houseowner1 to streets map.") # Debug print
-                     self.group.add(self.houseowner1)
-                 else:
-                     print(f"Warning: Houseowner1 object not found or not initialized when loading map '{map_key}'")
+                # Add houseowners if they exist
+                for ho in [self.houseowner0, self.houseowner1, self.houseowner2, self.houseowner3]:
+                    if ho: self.group.add(ho)
 
-                 if hasattr(self, 'houseowner2') and self.houseowner2:
-                     print("Adding houseowner2 to streets map.") # Debug print
-                     self.group.add(self.houseowner2)
-                 else:
-                     print(f"Warning: Houseowner2 object not found or not initialized when loading map '{map_key}'")
+                # --- Object Trigger Loading is Removed ---
 
-                 if hasattr(self, 'houseowner0') and self.houseowner0:
-                     print("Adding houseowner0 to streets map.") # Debug print
-                     self.group.add(self.houseowner0)
-                 else:
-                     print(f"Warning: Houseowner object not found or not initialized when loading map '{map_key}'")
-                
-                 if hasattr(self, 'houseowner3') and self.houseowner3:
-                     print("Adding houseowner3 to streets map.") # Debug print
-                     self.group.add(self.houseowner3)
-                 else:
-                    print(f"Warning: Houseowner3 object not found or not initialized when loading map '{map_key}'")
-
-            # Update the tracking variable
             self.current_map_key = map_key
             print(f"Map '{map_key}' loaded successfully.")
 
-        # --- Robust Error Handling ---
         except (KeyError, FileNotFoundError, ValueError, pygame.error, Exception) as e:
             print(f"Error loading map '{map_key}': {type(e).__name__} - {e}")
+            import traceback
+            traceback.print_exc()
             self.running = False
 
-
-
-
-            # Example: Add other map-specific sprites
-            # elif map_key == 'palace':
-            #    # Assuming a Mayor sprite exists and its position is known/loaded
-            #    # mayor_x, mayor_y = self.get_npc_start_pos('mayor', self.tmx_data)
-            #    # self.mayor = sprites.Mayor(mayor_x, mayor_y)
-            #    # self.group.add(self.mayor)
-            #    pass # Placeholder for palace-specific sprites
-            # elif map_key == 'streets':
-            #    pass # Placeholder for street-specific sprites
-
-            # Update the tracking variable for the currently loaded map
-            self.current_map_key = map_key
-            print(f"Map '{map_key}' loaded successfully.")
-
-        # --- Robust Error Handling for Map Loading ---
-        except (KeyError, FileNotFoundError, ValueError, pygame.error, Exception) as e: # Removed pytmx.TmxMapError
-            # Catch specific expected errors (file not found, invalid key, Tiled issues)
-            # and general exceptions during the complex loading process.
-            print(f"Error loading map '{map_key}': {type(e).__name__} - {e}")
-            # Provide more context for debugging if needed
-            # import traceback
-            # traceback.print_exc()
-            # Stop the game if a map fails to load, as it's likely critical
-            self.running = False
-
-    # --- NEW METHOD to check for event tiles ---
     def check_tile_events(self) -> None:
-        """Checks if the player is standing on a tile with an 'EventType' property."""
-        # Only run this check on the 'streets' map and if data is loaded
-        if self.current_map_key != 'streets' or not self.tmx_data or not self.player:
+        """
+        Checks the tile the player is standing on in the 'EventsMap' layer
+        for custom properties like 'Door' or 'CutsceneTrigger'.
+        Triggers events or cutscenes based on these properties.
+        """
+        if not self.tmx_data or not self.player or self.game_state != 'playing':
+            # Only check when playing and map/player are loaded
             return
 
-        # --- Determine the layer index containing the event tiles ---
-        event_layer_index: Optional[int] = None
-        event_layer_name = "EventsMap" # <<< CHANGE THIS to the actual name in Tiled
+        current_tile_properties: Optional[Dict] = None
+        event_layer_name = "EventsMap" # Make sure this layer exists in your TMX
+
         try:
-            # Find layer by name (more robust if layer order might change)
             event_layer = self.tmx_data.get_layer_by_name(event_layer_name)
             event_layer_index = self.tmx_data.layers.index(event_layer)
-        except ValueError:
-            # print(f"Warning: Layer '{event_layer_name}' not found in streets map.")
-            return # Stop if the layer doesn't exist
 
-        # Ensure we found a valid layer index
-        if event_layer_index is None:
-            return
+            # Use player's hitbox center for tile checking
+            tile_x = self.player.hitbox.centerx // self.tmx_data.tilewidth
+            tile_y = self.player.hitbox.centery // self.tmx_data.tileheight
 
-        # Get the player's current position in terms of map tiles
-        # Using the center of the player's hitbox is often good
-        try:
-            # Consider using midbottom if you want detection based on feet
-            # tile_x = self.player.hitbox.midbottomx // config.TILE_SIZE
-            # tile_y = self.player.hitbox.midbottomy // config.TILE_SIZE
-            tile_x = self.player.hitbox.centerx // config.TILE_SIZE
-            tile_y = self.player.hitbox.centery // config.TILE_SIZE
-        except AttributeError: # Player or hitbox might not be ready
-            return
-
-        # Get the properties of the tile the player is currently standing on
-        current_tile_properties: Optional[Dict] = None
-        try:
-            # Check map bounds before getting properties
+            # Ensure coordinates are within map bounds
             if 0 <= tile_x < self.tmx_data.width and 0 <= tile_y < self.tmx_data.height:
                  current_tile_properties = self.tmx_data.get_tile_properties(
                      tile_x, tile_y, event_layer_index
                  )
-            # else: player is outside map bounds
-        except ValueError:
-            # This can happen if coordinates are somehow invalid for the layer
-            # print(f"Warning: Invalid coordinates ({tile_x}, {tile_y}) for layer {event_layer_index}")
-            pass # Treat as no properties found
+                 # If get_tile_properties returns None (empty tile), treat as empty dict
+                 if current_tile_properties is None:
+                     current_tile_properties = {}
 
-        # Extract the EventType property, if it exists
-        current_door_value: Optional[str] = None
-        if current_tile_properties and 'Door' in current_tile_properties:
-            current_door_value = current_tile_properties['Door']
+        except (ValueError, AttributeError, IndexError):
+             # Layer not found, player not ready, or index error
+             print(f"Warning: Could not get tile properties at ({tile_x},{tile_y}) on layer '{event_layer_name}'.")
+             current_tile_properties = {} # Treat as no properties found
 
-        # --- Trigger the event only if it's a NEW event tile ---
-        if current_door_value is not None and current_door_value != self.last_event_tile_type:
-            # Player has entered a tile with an EventType they weren't on last frame
-            print(f"Player entered event tile: {current_door_value}") # <<< Your desired print statement
-            # You could add more specific actions here based on the value:
-            # if current_event_type == "Event1":
-            #     # Do something specific for Event1
-            # elif current_event_type == "Event2":
-            #     # Do something specific for Event2
-            # etc.
+        # --- Compare current tile properties with the last frame's ---
+        if current_tile_properties != self.last_event_tile_properties:
+            # --- Handle 'Door' Property (Example) ---
+            current_door = current_tile_properties.get('Door')
+            last_door = self.last_event_tile_properties.get('Door') if self.last_event_tile_properties else None
+            if current_door is not None and current_door != last_door:
+                print(f"Player entered event tile with Door: {current_door}")
+                # Add logic for door interaction if needed
 
-        # Update the 'last seen' event tile type for the next frame's comparison
-        self.last_event_tile_type = current_door_value
+            # --- Handle 'CutsceneTrigger' Property ---
+            current_trigger_key = current_tile_properties.get('CutsceneTrigger')
+            last_trigger_key = self.last_event_tile_properties.get('CutsceneTrigger') if self.last_event_tile_properties else None
+
+            # Check if we stepped onto a NEW tile with a CutsceneTrigger
+            if current_trigger_key is not None and current_trigger_key != last_trigger_key:
+                print(f"Player entered tile with CutsceneTrigger: {current_trigger_key}")
+                # Check if the cutscene exists and hasn't been played on this map load
+                if current_trigger_key in collision_cutscenes and current_trigger_key not in self.triggered_cutscenes:
+                    self.start_cutscene(current_trigger_key)
+                elif current_trigger_key in self.triggered_cutscenes:
+                     print(f"  Cutscene '{current_trigger_key}' already triggered on this map load.")
+                elif current_trigger_key not in collision_cutscenes:
+                     print(f"  Warning: Tile has CutsceneTrigger '{current_trigger_key}', but no matching cutscene found in dialogue.py.")
+
+            # --- Update the last known properties for the next frame ---
+            self.last_event_tile_properties = current_tile_properties
 
 
     def handle_map_transitions(self) -> None:
-        """
-        Checks if the player has reached the edge of the current map
-        and triggers loading the adjacent map if necessary.
-        Also repositions the player appropriately in the new map.
-        """
-        # Ensure player and map data are available before checking transitions
+        """Checks for map transitions."""
         if not self.player or not self.current_map_key or not self.group:
-             return # Cannot transition without player, map key, or sprite group
+             return
 
         player_rect = self.player.rect
-        # Use a buffer zone from the edge to trigger the transition (from config)
         buffer = config.MAP_TRANSITION_BUFFER
-
         new_map_key: Optional[str] = None
-        new_player_pos: Optional[tuple[str, int]] = None # ('side', coordinate)
+        new_player_pos: Optional[tuple[str, int]] = None
 
-        # --- Define Transition Logic Based on Current Map and Player Position ---
-        # Example: Transition from Pier (Left Edge) to Palace
-        if self.current_map_key == 'pier' and player_rect.left <= 0 + buffer: # Check left edge
-            print("Transition Trigger: Pier (Left) -> Palace")
+        # --- Transition Logic ---
+        if self.current_map_key == 'pier' and player_rect.left <= 0 + buffer:
             new_map_key = 'palace'
-            # Position player near the right edge of the new map
             new_player_pos = ('right', config.SCREEN_WIDTH - buffer)
-
-        # Example: Transition from Palace (Right Edge) back to Pier
-        elif self.current_map_key == 'palace' and player_rect.right >= config.SCREEN_WIDTH - buffer: # Check right edge
-             print("Transition Trigger: Palace (Right) -> Pier")
+        elif self.current_map_key == 'palace' and player_rect.right >= config.SCREEN_WIDTH - buffer:
              new_map_key = 'pier'
-             # Position player near the left edge of the new map
              new_player_pos = ('left', buffer)
-
-        # Example: Transition from Palace (Left Edge) to Streets
-        elif self.current_map_key == 'palace' and player_rect.left <= 0 + buffer: # Check left edge
-            print("Transition Trigger: Palace (Left) -> Streets")
-            new_map_key = 'streets' # Ensure 'streets' key exists in config.MAP_PATHS
-            # Position player near the right edge of the new 'streets' map
+        elif self.current_map_key == 'palace' and player_rect.left <= 0 + buffer:
+            new_map_key = 'streets'
             new_player_pos = ('right', config.SCREEN_WIDTH - buffer)
-
-        # Example: Transition from Streets (Right Edge) back to Palace
-        elif self.current_map_key == 'streets' and player_rect.right >= config.SCREEN_WIDTH - buffer: # Check right edge
-            print("Transition Trigger: Streets (Right) -> Palace")
+        elif self.current_map_key == 'streets' and player_rect.right >= config.SCREEN_WIDTH - buffer:
             new_map_key = 'palace'
-            # Position player near the left edge of the new 'palace' map
             new_player_pos = ('left', buffer)
+        # Add other transitions (e.g., top/bottom) if needed
 
-        # --- Execute Transition if Triggered ---
+        # --- Execute Transition ---
         if new_map_key and new_player_pos:
-            self.load_map(new_map_key) # Load the new map data and sprites
-            # Reposition the player in the newly loaded map
+            print(f"Transition Trigger: {self.current_map_key} -> {new_map_key}")
+            self.load_map(new_map_key) # This will reset triggered_cutscenes and last_event_tile_properties
             side, coordinate = new_player_pos
-            if side == 'left':
-                self.player.rect.left = coordinate
-            elif side == 'right':
-                self.player.rect.right = coordinate
-            elif side == 'top': # Example for vertical transitions
-                 self.player.rect.top = coordinate
-            elif side == 'bottom': # Example for vertical transitions
-                 self.player.rect.bottom = coordinate
-
-            # Crucially, update the hitbox position after moving the main rect
+            if side == 'left': self.player.rect.left = coordinate
+            elif side == 'right': self.player.rect.right = coordinate
+            elif side == 'top': self.player.rect.top = coordinate
+            elif side == 'bottom': self.player.rect.bottom = coordinate
             self.player.hitbox.center = self.player.rect.center
             print(f"Player repositioned at {side}={coordinate} in map '{new_map_key}'")
 
+    # --- Cutscene Methods ---
+
+    def start_cutscene(self, cutscene_key: str) -> None:
+        """Initiates a cutscene based on the provided key."""
+        if self.game_state == 'cutscene':
+            print("Warning: Tried to start a cutscene while one is already active.")
+            return # Don't start a new one if already in a cutscene
+
+        if cutscene_key in collision_cutscenes:
+            print(f"Starting cutscene: {cutscene_key}")
+            self.active_cutscene = collision_cutscenes[cutscene_key]
+            self.current_cutscene_slide = 0
+            self.game_state = 'cutscene'
+            self.triggered_cutscenes.add(cutscene_key) # Mark as played for this map load
+            self._load_cutscene_slide() # Load the first slide's assets
+        else:
+            # This case should be less likely now as the check happens in check_tile_events
+            print(f"Error: Attempted to start unknown cutscene key: {cutscene_key}")
+
+    def _load_cutscene_slide(self) -> None:
+        """Loads the image and renders the text for the current cutscene slide."""
+        if not self.active_cutscene or not self.cutscene_font:
+            self._end_cutscene() # Should not happen, but safety check
+            return
+
+        slide_index = self.current_cutscene_slide
+        if 0 <= slide_index < self.active_cutscene.num_slides:
+            # --- Load Image ---
+            image_path = self.active_cutscene.image_paths[slide_index]
+            self.cutscene_image_surface = None # Reset previous image
+            if image_path:
+                try:
+                    loaded_image = pygame.image.load(image_path).convert_alpha()
+                    # Optional: Scale image to fit a certain area
+                    max_img_h = self.screen.get_height() * 0.6 # Example: Max 60% screen height
+                    img_w, img_h = loaded_image.get_size()
+                    if img_h > max_img_h:
+                        scale_factor = max_img_h / img_h
+                        new_w = int(img_w * scale_factor)
+                        new_h = int(img_h * scale_factor)
+                        self.cutscene_image_surface = pygame.transform.smoothscale(loaded_image, (new_w, new_h))
+                    else:
+                        self.cutscene_image_surface = loaded_image
+                except pygame.error as e:
+                    print(f"Error loading cutscene image '{image_path}': {e}")
+                except FileNotFoundError:
+                    print(f"Error: Cutscene image file not found: '{image_path}'")
+
+            # --- Render Text ---
+            text = self.active_cutscene.sentences[slide_index]
+            self.cutscene_text_surface = None # Reset previous text
+            if text:
+                # Define the rectangle area for the text (e.g., bottom part of screen)
+                text_margin = 50 # Pixels from screen edge
+                text_box_height = 150 # Max height for text box
+                text_rect = pygame.Rect(
+                    text_margin, # Left padding
+                    self.screen.get_height() - text_box_height - text_margin, # Top position
+                    self.screen.get_width() - (text_margin * 2), # Width
+                    text_box_height # Height
+                )
+                try:
+                    self.cutscene_text_surface = render_textrect(
+                        text,
+                        self.cutscene_font,
+                        text_rect,
+                        config.WHITE,        # Text color
+                        config.DARK_GRAY,    # Background color for text box
+                        justification=0      # Left-aligned
+                    )
+                except TextRectException as e:
+                    print(f"Error rendering cutscene text: {e}")
+                    # Fallback: Render simple error message
+                    self.cutscene_text_surface = self.cutscene_font.render("Text Error", True, config.WHITE, config.DARK_GRAY)
+                except Exception as e:
+                     print(f"Unexpected error rendering cutscene text: {e}")
+                     self.cutscene_text_surface = self.cutscene_font.render("Render Error", True, config.WHITE, config.DARK_GRAY)
+
+        else:
+            # Should be caught by _advance_cutscene_slide, but safety check
+            print(f"Warning: Invalid slide index ({slide_index}) requested.")
+            self._end_cutscene()
+
+    def _advance_cutscene_slide(self) -> None:
+        """Moves to the next slide or ends the cutscene."""
+        if not self.active_cutscene: return
+
+        self.current_cutscene_slide += 1
+        if self.current_cutscene_slide >= self.active_cutscene.num_slides:
+            self._end_cutscene()
+        else:
+            self._load_cutscene_slide() # Load the next slide
+
+    def _end_cutscene(self) -> None:
+        """Cleans up after a cutscene finishes and returns to gameplay."""
+        print("Ending cutscene.")
+        self.game_state = 'playing'
+        self.active_cutscene = None
+        self.current_cutscene_slide = 0
+        self.cutscene_image_surface = None
+        self.cutscene_text_surface = None
+        # Optional: Add a small delay before player can move again?
+        # pygame.time.wait(200) # e.g., 200ms pause
+
+    # --- Main Game Loop Methods ---
 
     def run(self) -> None:
         """Contains the main game loop."""
         print("Starting game loop...")
         while self.running:
-            # Calculate delta time (time since last frame) for frame-rate independent movement/physics
-            # dt is crucial for smooth updates regardless of FPS fluctuations
-            dt = self.clock.tick(config.FPS) / 1000.0 # Convert milliseconds to seconds
+            dt = self.clock.tick(config.FPS) / 1000.0
 
             # --- Game Loop Stages ---
-            # 1. Handle Events: Process user input (keyboard, mouse, quit)
             self.handle_events()
-
-            # 2. Update State: Update sprite positions, animations, game logic
-            self.update(dt) # Pass delta time to the update method
-
-            # 3. Something
-            self.check_tile_events() # <<< MAKE SURE THIS CALL IS PRESENT
-
-            # 4. Check Transitions: See if map change is needed after updates
-            self.handle_map_transitions()
-
-            # 5. Draw Frame: Render the current scene to the screen
+            self.update(dt)
             self.draw()
 
-        print("Exiting game loop.") # Message indicating the loop has ended normally
+        print("Exiting game loop.")
 
     def handle_events(self) -> None:
         """Processes all events from Pygame's event queue."""
         for event in pygame.event.get():
-        # Handle the window close button
             if event.type == pygame.QUIT:
-                print("QUIT event detected.")
-                self.running = False # Signal the main loop to exit
+                self.running = False
 
-        # --- Add other event handling as needed ---
-            elif event.type == pygame.KEYDOWN:
-            # --- Test Dialogue Box Toggle --- # <<< ADD THIS
-                if event.key == pygame.K_t:
-                    print("T key pressed - Toggling test dialogue box.")
+            if self.game_state == 'playing':
+                # Handle gameplay input (movement is handled in Player.update)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_t: # Toggle test dialogue
+                        print("T key pressed - Toggling test dialogue box.")
+                        self.test_dialogue_box.toggle()
+                    # Add other gameplay keybinds here (e.g., interaction key)
 
-
-            # --- Add other event handling as needed ---
-            # Example: Handling key presses for actions other than movement
-            # elif event.type == pygame.KEYDOWN:
-            #     if event.key == pygame.K_SPACE:
-            #         print("Action key (Space) pressed!")
-            #         # Trigger interaction, attack, jump, etc.
-            #     elif event.key == pygame.K_ESCAPE:
-            #         print("Escape key pressed.")
-            #         # Could open a menu or quit
-            #         # self.running = False
-            # Example: Mouse clicks
-            # elif event.type == pygame.MOUSEBUTTONDOWN:
-            #     if event.button == 1: # Left mouse button
-            #         print(f"Left mouse click at {event.pos}")
+            elif self.game_state == 'cutscene':
+                # Handle cutscene input (only Enter key)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN: # ENTER key
+                        print("Enter pressed - Advancing cutscene.")
+                        self._advance_cutscene_slide()
+                    elif event.key == pygame.K_ESCAPE: # Optional: Allow skipping cutscene
+                        print("Escape pressed - Ending cutscene early.")
+                        self._end_cutscene()
 
     def update(self, dt: float) -> None:
-        """
-        Updates the state of all active game objects for the current frame.
-        This includes updating sprites and centering the camera.
+        """Updates the game state based on the current game_state."""
+        if self.game_state == 'playing':
+            if self.group:
+                # Update sprites (includes player movement)
+                self.group.update(dt)
+                # Center camera on player
+                self.group.center(self.player.rect.center)
+                # Check for tile-based events (including cutscene triggers)
+                self.check_tile_events() # <--- This now handles cutscene triggers
+                # Check for map transitions
+                self.handle_map_transitions()
 
-        Args:
-            dt (float): Delta time (time since the last frame in seconds).
-                        Used for frame-rate independent calculations.
-        """
-        # Only perform updates if a map and sprite group are loaded
-        if self.group:
-            # Update all sprites within the pyscroll group.
-            # This calls the 'update' method of each sprite in the group (e.g., Player.update).
-            # Pass delta time (dt) to sprite update methods if they need it for physics/timing.
-            self.group.update(dt)
+                # --- Collision check for triggers is removed ---
 
-            # Center the map view (camera) on the player's current position.
-            # pyscroll handles the scrolling based on this center point.
-            self.group.center(self.player.rect.center)
+        elif self.game_state == 'cutscene':
+            # No game world updates happen during a cutscene
+            pass
 
     def draw(self) -> None:
-        """Renders the current game scene to the screen."""
-        # Ensure the map renderer and sprite group are ready
-        if self.group and self.map_layer:
-            # --- Drawing Order ---
-            # 1. Optional: Fill background (usually not needed if map covers screen)
-            # self.screen.fill(config.BACKGROUND_COLOR) # Example if needed
+        """Renders the current game scene based on the game_state."""
+        if self.game_state == 'playing':
+            # --- Draw Gameplay Scene ---
+            if self.group and self.map_layer:
+                self.group.draw(self.screen)
 
-            # 2. Draw the map and all sprites within the group.
-            # pyscroll's group.draw() handles drawing the map layer scrolled
-            # correctly and then drawing each sprite at its position relative
-            # to the map.
-            self.group.draw(self.screen)
+                # --- Draw UI Elements ---
+                if self.ui_font:
+                    fps_text = f"FPS: {self.clock.get_fps():.1f}"
+                    fps_surf = self.ui_font.render(fps_text, True, config.WHITE)
+                    self.screen.blit(fps_surf, (10, 10))
 
-            # --- DEBUG: Draw Player Hitbox ---
-            # Draw a red rectangle representing the player's hitbox
-            # Make sure self.player exists before trying to draw its hitbox
-            # if self.player:
-            #     pygame.draw.rect(self.screen, (255, 0, 0), self.player.hitbox, 2) # Red outline, 2px thick
-            # --- END DEBUG ---
+                # Draw test dialogue box if active
+                if hasattr(self, 'test_dialogue_box'):
+                    self.test_dialogue_box.draw(self.screen)
 
-            # --- Draw UI Elements ---
-            # 3.  Check if the font was successfully initialized
-            if self.ui_font:
-                # Render the FPS counter text
-                # Format the FPS to one decimal place (e.g., 59.8)
-                fps_text_surface = self.ui_font.render(
-                    f"", # The text string
-                    True,                               # Anti-aliasing enabled
-                    (255, 255, 255)                     # Text color (white)
-                    # Optional: Background color (None for transparent)
+                # --- DEBUG: Draw Player Hitbox ---
+                # pygame.draw.rect(self.screen, (255, 0, 0), self.player.hitbox, 1)
+
+
+        elif self.game_state == 'cutscene':
+            # --- Draw Cutscene Scene ---
+            self.screen.fill(config.BLACK) # Black background
+
+            # Draw Image (centered horizontally, positioned vertically)
+            if self.cutscene_image_surface:
+                img_rect = self.cutscene_image_surface.get_rect(
+                    centerx=self.screen.get_width() // 2,
+                    top=50 # Pixels from the top edge
                 )
-                # Blit the rendered text surface onto the screen at position (10, 10)
-                self.screen.blit(fps_text_surface, (10, 10))
+                self.screen.blit(self.cutscene_image_surface, img_rect)
 
-                # --- Draw Dialogue Box (if active) --- # <<< MOVED HERE
-                # Draw this *after* the map/sprites and potentially after basic UI
-                # so it appears on top of them.
-            if hasattr(self, 'test_dialogue_box'): # Check if it exists
-                self.test_dialogue_box.draw(self.screen) # Pass the screen to draw on
+            # Draw Text Box (positioned at the bottom)
+            if self.cutscene_text_surface:
+                 # Use the text_rect calculated in _load_cutscene_slide for positioning
+                text_margin = 50
+                text_box_height = 150
+                text_rect = pygame.Rect(
+                    text_margin,
+                    self.screen.get_height() - text_box_height - text_margin,
+                    self.screen.get_width() - (text_margin * 2),
+                    text_box_height
+                )
+                # Draw the background rectangle for the text box first (optional, if render_textrect doesn't fill)
+                # pygame.draw.rect(self.screen, config.DARK_GRAY, text_rect)
+                # Blit the rendered text surface onto the screen at the calculated position
+                self.screen.blit(self.cutscene_text_surface, text_rect.topleft)
 
-                # --- Add more UI elements here if needed ---
-                # Example: Display current map name
-                # map_text_surface = self.ui_font.render(
-                #     f"Map: {self.current_map_key}", True, (255, 255, 255)
-                # )
-                # self.screen.blit(map_text_surface, (10, 40)) # Position below FPS
+            # Optional: Add a "Press Enter" prompt
+            if self.ui_font:
+                 prompt_text = "Press ENTER to continue..."
+                 prompt_surf = self.ui_font.render(prompt_text, True, config.WHITE)
+                 prompt_rect = prompt_surf.get_rect(centerx=self.screen.get_width() // 2, bottom=self.screen.get_height() - 20)
+                 self.screen.blit(prompt_surf, prompt_rect)
 
-            # --- END UI Elements ---
 
-            # 4. Update the full display surface to show the newly drawn frame.
-            pygame.display.flip()
-
-        elif not self.running:
-             # Optional: If the game stopped due to an error during loading,
-             # you might want to display an error message on the screen here.
-             # font = pygame.font.Font(None, 50)
-             # error_text = font.render("Error loading game assets!", True, (255, 0, 0))
-             # text_rect = error_text.get_rect(center=self.screen.get_rect().center)
-             # self.screen.fill((0, 0, 0)) # Black background
-             # self.screen.blit(error_text, text_rect)
-             # pygame.display.flip() # Show the error message
-             pass # Currently does nothing if not running and draw is called
+        # Update the display regardless of state
+        pygame.display.flip()
 
 
 def main() -> None:
-    """
-    Main function to initialize Pygame, set up the screen,
-    create the Game instance, and start the game execution.
-    Includes error handling for the main game run.
-    """
+    """Main function to initialize and run the game."""
     print("Initializing Pygame...")
-    pygame.init() # Initialize all Pygame modules
+    pygame.init()
     print("Pygame initialized successfully.")
 
-    # Set up the display window using dimensions from the config file
     screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
-    # Set the title of the window
-    pygame.display.set_caption("Pier to the Past Game") # Keep your game title
+    pygame.display.set_caption("Pier to the Past Game")
 
     try:
         print("Creating Game instance...")
-        game = Game(screen) # Create the main game object
+        game = Game(screen)
         print("Starting game run...")
-        game.run() # Start the main game loop
+        game.run()
 
     except Exception as e:
-        # Catch any unexpected errors that occur during game initialization or run
         print(f"\n--- An unexpected error occurred during game execution ---")
         print(f"{type(e).__name__}: {e}")
-        # Print the full traceback for detailed debugging
         import traceback
         traceback.print_exc()
         print("----------------------------------------------------------")
 
     finally:
-        # This block ensures Pygame is quit properly, even if errors occurred
         print("Quitting Pygame...")
         pygame.quit()
         print("Pygame quit successfully.")
-        # Optional: Force exit the script, especially useful if Pygame hangs on quit
-        # import sys
-        # sys.exit()
 
-# Standard Python entry point check:
-# Ensures that the main() function is called only when the script is executed directly
 if __name__ == "__main__":
     main()
