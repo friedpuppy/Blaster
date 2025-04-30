@@ -8,6 +8,12 @@ ZOOM_LEVEL: float = 1.0  # Use float for zoom
 DEFAULT_LAYER: int = 1
 TILE_SIZE: int = 32
 
+
+# Colours
+WHITE = (255,255,255)
+BLACK = (0,0,0)
+DARK_GRAY = (96,89,88)
+
 # File paths (Using relative paths is generally good practice)
 ASSETS_DIR = './Assets'
 IMAGES_DIR = f'{ASSETS_DIR}/Images'

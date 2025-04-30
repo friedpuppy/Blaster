@@ -1,6 +1,6 @@
 # main.py
 # Author: Callum Donnelly
-# Date: 2025-04-23 (or update to current date)
+# Date: 2025-04-24 (or update to current date)
 # Description: Main entry point for the game. Initializes Pygame,
 #              manages the game loop, handles map loading and transitions,
 #              and coordinates updates and drawing of game elements.
@@ -14,6 +14,8 @@ import pytmx # For loading Tiled map files (.tmx)
 import pyscroll # For rendering Tiled maps efficiently
 from pytmx.util_pygame import load_pygame # Pygame-specific Tiled loader utility
 from typing import Optional, Dict # Used for type hinting optional attributes
+from dialogue import DialogueBox, dialogues # Import necessary classes/data
+
 
 # Import from our custom modules
 import config  # Game configuration variables
@@ -94,7 +96,22 @@ class Game:
              self.houseowner2 = None
              self.houseowner3 = None
 
-
+    # --- Dialogue Box Initialization (for testing) --- # <<< ADD THIS SECTION
+        dialogue_box_x = (config.SCREEN_WIDTH / 2) - 300 # Center horizontally (adjust width if needed)
+        dialogue_box_y = config.SCREEN_HEIGHT - 250     # Position near bottom
+        test_message = ("This is a test dialogue box. Press 'T' again to hide it. "
+                    "It should handle word wrapping automatically if the text gets long enough "
+                    "to require multiple lines within the defined box width.")
+        self.test_dialogue_box = DialogueBox(
+        self, # Pass the game instance
+        test_message,
+        dialogue_box_x,
+        dialogue_box_y,
+        width=600, # Standard width
+        height=200 # Standard height
+    )
+    # Note: It starts inactive (self.active = False) by default
+                    
 
         # --- Initial Map Load ---
         # Load the starting map using its key from the config file
@@ -394,10 +411,17 @@ class Game:
     def handle_events(self) -> None:
         """Processes all events from Pygame's event queue."""
         for event in pygame.event.get():
-            # Handle the window close button
+        # Handle the window close button
             if event.type == pygame.QUIT:
                 print("QUIT event detected.")
                 self.running = False # Signal the main loop to exit
+
+        # --- Add other event handling as needed ---
+            elif event.type == pygame.KEYDOWN:
+            # --- Test Dialogue Box Toggle --- # <<< ADD THIS
+                if event.key == pygame.K_t:
+                    print("T key pressed - Toggling test dialogue box.")
+
 
             # --- Add other event handling as needed ---
             # Example: Handling key presses for actions other than movement
@@ -468,6 +492,12 @@ class Game:
                 )
                 # Blit the rendered text surface onto the screen at position (10, 10)
                 self.screen.blit(fps_text_surface, (10, 10))
+
+                # --- Draw Dialogue Box (if active) --- # <<< MOVED HERE
+                # Draw this *after* the map/sprites and potentially after basic UI
+                # so it appears on top of them.
+            if hasattr(self, 'test_dialogue_box'): # Check if it exists
+                self.test_dialogue_box.draw(self.screen) # Pass the screen to draw on
 
                 # --- Add more UI elements here if needed ---
                 # Example: Display current map name
