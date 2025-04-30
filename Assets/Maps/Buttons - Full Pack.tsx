@@ -9,12 +9,20 @@
  </tile>
  <tile id="50">
   <properties>
+   <property name="CutsceneTrigger" value="houseowner1_cutscene"/>
    <property name="Door" value="houseowner1"/>
   </properties>
  </tile>
  <tile id="52">
   <properties>
+   <property name="CutsceneTrigger" value="houseowner2_cutscene"/>
    <property name="Door" value="houseowner2"/>
+  </properties>
+ </tile>
+ <tile id="54">
+  <properties>
+   <property name="CutsceneTrigger" value="houseowner3_cutscene"/>
+   <property name="Door" value="houseowner3"/>
   </properties>
  </tile>
 </tileset>

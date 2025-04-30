@@ -167,6 +167,9 @@ class Game:
         current_tile_properties: Optional[Dict] = None
         event_layer_name = "EventsMap" # Make sure this layer exists in your TMX
 
+        # Initialize tile coordinates before the try block
+        tile_x, tile_y = -1, -1 # Use placeholder values
+
         try:
             event_layer = self.tmx_data.get_layer_by_name(event_layer_name)
             event_layer_index = self.tmx_data.layers.index(event_layer)
@@ -183,10 +186,15 @@ class Game:
                  # If get_tile_properties returns None (empty tile), treat as empty dict
                  if current_tile_properties is None:
                      current_tile_properties = {}
+            else:
+                 # Player is outside map bounds for tile checking
+                 current_tile_properties = {}
 
-        except (ValueError, AttributeError, IndexError):
-             # Layer not found, player not ready, or index error
-             print(f"Warning: Could not get tile properties at ({tile_x},{tile_y}) on layer '{event_layer_name}'.")
+
+        except (ValueError, AttributeError, IndexError) as e: # Catch specific exceptions
+             # Layer not found, player not ready, index error, or other issues getting properties
+             # The print statement can now safely use tile_x and tile_y (even if they are -1)
+             print(f"Warning: Could not get tile properties at ({tile_x},{tile_y}) on layer '{event_layer_name}'. Error: {e}")
              current_tile_properties = {} # Treat as no properties found
 
         # --- Compare current tile properties with the last frame's ---
@@ -276,66 +284,69 @@ class Game:
     def _load_cutscene_slide(self) -> None:
         """Loads the image and renders the text for the current cutscene slide."""
         if not self.active_cutscene or not self.cutscene_font:
-            self._end_cutscene() # Should not happen, but safety check
+            self._end_cutscene()
             return
 
         slide_index = self.current_cutscene_slide
         if 0 <= slide_index < self.active_cutscene.num_slides:
-            # --- Load Image ---
+            # --- Load and Scale Image to Fullscreen ---
             image_path = self.active_cutscene.image_paths[slide_index]
             self.cutscene_image_surface = None # Reset previous image
             if image_path:
                 try:
-                    loaded_image = pygame.image.load(image_path).convert_alpha()
-                    # Optional: Scale image to fit a certain area
-                    max_img_h = self.screen.get_height() * 0.6 # Example: Max 60% screen height
-                    img_w, img_h = loaded_image.get_size()
-                    if img_h > max_img_h:
-                        scale_factor = max_img_h / img_h
-                        new_w = int(img_w * scale_factor)
-                        new_h = int(img_h * scale_factor)
-                        self.cutscene_image_surface = pygame.transform.smoothscale(loaded_image, (new_w, new_h))
-                    else:
-                        self.cutscene_image_surface = loaded_image
+                    loaded_image = pygame.image.load(image_path).convert() # Use convert() if no alpha needed for background
+                    # Scale the image to fit the entire screen
+                    self.cutscene_image_surface = pygame.transform.smoothscale(
+                        loaded_image, (config.SCREEN_WIDTH, config.SCREEN_HEIGHT)
+                    )
                 except pygame.error as e:
-                    print(f"Error loading cutscene image '{image_path}': {e}")
+                    print(f"Error loading/scaling cutscene image '{image_path}': {e}")
+                    # Optional: Create a fallback black surface if loading fails
+                    self.cutscene_image_surface = pygame.Surface((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+                    self.cutscene_image_surface.fill(config.BLACK)
                 except FileNotFoundError:
                     print(f"Error: Cutscene image file not found: '{image_path}'")
+                    # Optional: Create a fallback black surface if file not found
+                    self.cutscene_image_surface = pygame.Surface((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+                    self.cutscene_image_surface.fill(config.BLACK)
+            else:
+                 # If image_path is None, create a black background surface
+                 self.cutscene_image_surface = pygame.Surface((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+                 self.cutscene_image_surface.fill(config.BLACK)
 
-            # --- Render Text ---
+
+            # --- Render Text (remains the same) ---
             text = self.active_cutscene.sentences[slide_index]
             self.cutscene_text_surface = None # Reset previous text
             if text:
-                # Define the rectangle area for the text (e.g., bottom part of screen)
-                text_margin = 50 # Pixels from screen edge
-                text_box_height = 150 # Max height for text box
+                text_margin = 50
+                text_box_height = 150
                 text_rect = pygame.Rect(
-                    text_margin, # Left padding
-                    self.screen.get_height() - text_box_height - text_margin, # Top position
-                    self.screen.get_width() - (text_margin * 2), # Width
-                    text_box_height # Height
+                    text_margin,
+                    self.screen.get_height() - text_box_height - text_margin,
+                    self.screen.get_width() - (text_margin * 2),
+                    text_box_height
                 )
                 try:
                     self.cutscene_text_surface = render_textrect(
                         text,
                         self.cutscene_font,
                         text_rect,
-                        config.WHITE,        # Text color
-                        config.DARK_GRAY,    # Background color for text box
-                        justification=0      # Left-aligned
+                        config.WHITE,
+                        config.DARK_GRAY, # Background for the text box itself
+                        justification=0
                     )
                 except TextRectException as e:
                     print(f"Error rendering cutscene text: {e}")
-                    # Fallback: Render simple error message
                     self.cutscene_text_surface = self.cutscene_font.render("Text Error", True, config.WHITE, config.DARK_GRAY)
                 except Exception as e:
                      print(f"Unexpected error rendering cutscene text: {e}")
                      self.cutscene_text_surface = self.cutscene_font.render("Render Error", True, config.WHITE, config.DARK_GRAY)
 
         else:
-            # Should be caught by _advance_cutscene_slide, but safety check
             print(f"Warning: Invalid slide index ({slide_index}) requested.")
             self._end_cutscene()
+
 
     def _advance_cutscene_slide(self) -> None:
         """Moves to the next slide or ends the cutscene."""
@@ -419,15 +430,15 @@ class Game:
     def draw(self) -> None:
         """Renders the current game scene based on the game_state."""
         if self.game_state == 'playing':
-            # --- Draw Gameplay Scene ---
+            # --- Draw Gameplay Scene (remains the same) ---
             if self.group and self.map_layer:
                 self.group.draw(self.screen)
 
                 # --- Draw UI Elements ---
-                if self.ui_font:
-                    fps_text = f"FPS: {self.clock.get_fps():.1f}"
-                    fps_surf = self.ui_font.render(fps_text, True, config.WHITE)
-                    self.screen.blit(fps_surf, (10, 10))
+                #if self.ui_font:
+                #    fps_text = f"FPS: {self.clock.get_fps():.1f}"
+                #    fps_surf = self.ui_font.render(fps_text, True, config.WHITE)
+                #    self.screen.blit(fps_surf, (10, 10))
 
                 # Draw test dialogue box if active
                 if hasattr(self, 'test_dialogue_box'):
@@ -439,19 +450,17 @@ class Game:
 
         elif self.game_state == 'cutscene':
             # --- Draw Cutscene Scene ---
-            self.screen.fill(config.BLACK) # Black background
 
-            # Draw Image (centered horizontally, positioned vertically)
+            # 1. Draw the fullscreen background image first
             if self.cutscene_image_surface:
-                img_rect = self.cutscene_image_surface.get_rect(
-                    centerx=self.screen.get_width() // 2,
-                    top=50 # Pixels from the top edge
-                )
-                self.screen.blit(self.cutscene_image_surface, img_rect)
+                self.screen.blit(self.cutscene_image_surface, (0, 0))
+            else:
+                # Fallback if image surface somehow wasn't created
+                self.screen.fill(config.BLACK)
 
-            # Draw Text Box (positioned at the bottom)
+            # 2. Draw Text Box on top of the image
             if self.cutscene_text_surface:
-                 # Use the text_rect calculated in _load_cutscene_slide for positioning
+                 # Calculate position for the text box (same as before)
                 text_margin = 50
                 text_box_height = 150
                 text_rect = pygame.Rect(
@@ -460,16 +469,18 @@ class Game:
                     self.screen.get_width() - (text_margin * 2),
                     text_box_height
                 )
-                # Draw the background rectangle for the text box first (optional, if render_textrect doesn't fill)
-                # pygame.draw.rect(self.screen, config.DARK_GRAY, text_rect)
-                # Blit the rendered text surface onto the screen at the calculated position
+                # Blit the rendered text surface onto the screen
                 self.screen.blit(self.cutscene_text_surface, text_rect.topleft)
 
-            # Optional: Add a "Press Enter" prompt
+            # 3. Draw "Press Enter" prompt on top
             if self.ui_font:
                  prompt_text = "Press ENTER to continue..."
                  prompt_surf = self.ui_font.render(prompt_text, True, config.WHITE)
+                 # Position prompt at the bottom-center
                  prompt_rect = prompt_surf.get_rect(centerx=self.screen.get_width() // 2, bottom=self.screen.get_height() - 20)
+                 # Optional: Add a slight shadow/background for better visibility on complex images
+                 # shadow_surf = self.ui_font.render(prompt_text, True, config.BLACK)
+                 # self.screen.blit(shadow_surf, prompt_rect.move(1,1)) # Offset shadow slightly
                  self.screen.blit(prompt_surf, prompt_rect)
 
 
@@ -483,8 +494,21 @@ def main() -> None:
     pygame.init()
     print("Pygame initialized successfully.")
 
+    # --- Set the Window Icon ---
+    try:
+        # Construct the full path to the icon using config
+        icon_path = f"{config.IMAGES_DIR}/game_icon.png" # Or your actual icon filename
+        icon_surface = pygame.image.load(icon_path)
+        pygame.display.set_icon(icon_surface)
+        print(f"Window icon set from: {icon_path}")
+    except pygame.error as e:
+        print(f"Warning: Could not load or set window icon: {e}")
+    except FileNotFoundError:
+        print(f"Warning: Icon file not found at: {icon_path}")
+    # --------------------------
+
     screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
-    pygame.display.set_caption("Pier to the Past Game")
+    pygame.display.set_caption("Pier to the Past Game") # Caption is set here
 
     try:
         print("Creating Game instance...")

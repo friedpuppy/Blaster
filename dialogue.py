@@ -228,41 +228,43 @@ class DialogueBox(pygame.sprite.Sprite):
 
 # --- Dialogue class remains the same ---
 class Dialogue:
-    # ... (Dialogue class remains the same) ...
-    def __init__(self, name, lines, quest_stage_advance=None, money_given=0, story_mode=False, story_lines=None):
+    """Represents a sequence of text lines for an NPC."""
+    def __init__(self, name: str, lines: list[str]):
+        """
+        Args:
+            name (str): The name of the speaker (e.g., "Mayor", "Resident").
+            lines (list[str]): A list of text strings for the dialogue.
+        """
         self.name = name
         self.lines = lines
-        self.current_line = 0
-        self.quest_stage_advance = quest_stage_advance  # What quest stage to advance to
-        self.money_given = money_given
-        self.has_given_money = False
-        self.story_mode = story_mode
-        self.story_lines = story_lines if story_mode else []
+        self.current_line = 0 # Index of the currently displayed line
 
-    def get_current_line(self):
+    def get_current_line(self) -> str | None:
         """Returns the current line without advancing."""
         if 0 <= self.current_line < len(self.lines):
             return self.lines[self.current_line]
-        return None # Or maybe the last line?
+        return None # Should not happen if reset correctly
 
-    def next_line(self):
+    def next_line(self) -> str | None:
         """Advances to the next line and returns it. Returns None if at the end."""
         self.current_line += 1
-        if self.current_line >= len(self.lines):
+        if self.current_line < len(self.lines):
+            return self.lines[self.current_line]
+        else:
             # self.current_line = len(self.lines) # Stay at end index?
             return None # Signal end of dialogue
-        return self.lines[self.current_line]
 
-    def is_finished(self):
+    def is_finished(self) -> bool:
         """Checks if the dialogue has reached the end."""
         return self.current_line >= len(self.lines)
 
-    def reset(self):
+    def reset(self) -> None:
+        """Resets the dialogue back to the first line."""
         self.current_line = 0
-        self.has_given_money = False # Reset money flag too if needed
 
 # --- Cutscene class remains largely the same, ensure it takes lists ---
 class Cutscene:
+    # ... (Cutscene class definition) ...
     """Represents a sequence of images and corresponding text lines for a cutscene."""
     def __init__(self, image_paths: list[str | None], sentences: list[str]):
         """
@@ -278,25 +280,24 @@ class Cutscene:
         self.sentences = sentences
         self.num_slides = len(sentences) # Store the total number of slides
 
-# --- dialogues dictionary remains the same ---
+# --- Cleaned dialogues dictionary ---
 dialogues = {
-    "door_1_npc": Dialogue("Door1NPC", ["Hello! I live here."]),
-    "donor1": Dialogue("Donor 1", ["Oh no, the pier is broken!", "I really hope this money helps.", "Good luck!"], quest_stage_advance="talked_to_donor1", money_given=5),
-    "donor2": Dialogue("Donor 2", ["I heard about the pier.", "Here's 10 gold to help.", "I hope it gets fixed soon!"], quest_stage_advance="talked_to_donor2", money_given=10),
-    "donor3": Dialogue("Donor 3", ["The pier is in bad shape.", "I can spare 2 gold.", "Be careful out there!"], quest_stage_advance="talked_to_donor3", money_given=2),
-    "donor1_done": Dialogue("Donor 1", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
-    "donor2_done": Dialogue("Donor 2", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
-    "donor3_done": Dialogue("Donor 3", ["Thanks for helping with the pier!", "I have no more money to give."], money_given=0),
-    "story_teller": Dialogue("Story Teller", ["This is the start of a story!"], story_mode=True, story_lines=["This is the first line of the story.", "This is the second line.", "This is the third line."]),
-    "pierkeeper": Dialogue("Pierkeeper", [
-        "Oh, the Chain Pier! What a terrible sight after last night's storm.",
-        "The second bridge is hanging precariously, and the third is gone entirely!",
-        "We need to gather funds to repair it. Can you help?",
-        "Speak to the townsfolk, they may be able to pledge monetary support."
-    ], quest_stage_advance="talked_to_pierkeeper"),
-    "pierkeeper_intro": Dialogue("Pierkeeper", ["Hello there, I need to talk to you about the pier."], quest_stage_advance="talked_to_pierkeeper"), #added this line
-    "pierkeeper_done": Dialogue("Pierkeeper", ["Thank you for helping to repair the pier!", "I have no more to say."], money_given=0),
+    # Keeping simple dialogues
+    "door_1_npc": Dialogue("Door1NPC", ["Hello! I live here."]), # Example if used by a tile
     "rude_npc": Dialogue("RudeNPC", ["Go away! I don't have time for you.", "Leave me alone!"]),
+
+    # --- Dialogue Keys for NPCs (Make sure these match keys used in main.py) ---
+    "pierkeeper_generic": Dialogue("Pierkeeper", ["The pier needs fixing... it's a tragedy."]),
+    "mayor_greeting": Dialogue("Mayor", ["Ah, hello there!", "Terrible business with the pier, isn't it?"]),
+    "houseowner0_generic": Dialogue("Resident", ["Just admiring the view.", "Shame about the pier."]),
+    "houseowner1_generic": Dialogue("Resident", ["It was such a lovely pier before the storm."]),
+    "houseowner2_generic": Dialogue("Resident", ["I hope they can repair it soon."]),
+    "houseowner3_generic": Dialogue("Resident", ["The town needs that pier."]),
+
+    # --- Add your NEW stories/dialogues here! ---
+    "new_story_npc_1": Dialogue("Mysterious Figure", ["Have you seen the state of the pier?", "Something doesn't feel right about that storm..."]),
+    "shopkeeper_intro": Dialogue("Shopkeeper", ["Welcome!", "Looking for supplies?", "Can't offer much with the pier out of commission."]),
+    # Add more as needed...
 }
 
 # --- NEW: Dictionary for Collision-Triggered Cutscenes ---
@@ -304,7 +305,8 @@ dialogues = {
 collision_cutscenes: dict[str, Cutscene] = {
     "intro_story": Cutscene( # Example key, replace with your Tiled value
         image_paths=[
-            f'{IMAGES_DIR}/cutscenes/intro_slide_1.png', # Make sure these image files exist!
+            # Note: Corrected path assuming 'cutscenes' subfolder
+            f'{IMAGES_DIR}/cutscenes/intro_slide_1.png',
             f'{IMAGES_DIR}/cutscenes/intro_slide_2.png',
             f'{IMAGES_DIR}/cutscenes/intro_slide_3.png',
             None, # Example: A slide with just text on black background
@@ -327,13 +329,70 @@ collision_cutscenes: dict[str, Cutscene] = {
          ]
     ),
 
-    # --- ADD THIS NEW ENTRY ---
-    "houseowner0_cutscene": Cutscene(
-        image_paths=[None], # Use None for no image (black screen)
-        sentences=["You triggered the Houseowner 0 cutscene! Press Enter to close."]
+    # --- UPDATED ENTRY ---
+    "houseowner1_cutscene": Cutscene(
+        image_paths=[
+            f'{IMAGES_DIR}/story1.jpg', # Slide 1
+            f'{IMAGES_DIR}/story1.jpg', # Slide 2
+            f'{IMAGES_DIR}/story1.jpg', # Slide 3
+            f'{IMAGES_DIR}/story1.jpg', # Slide 4
+            f'{IMAGES_DIR}/story1.jpg', # Slide 5
+            f'{IMAGES_DIR}/story1.jpg', # Slide 6
+            f'{IMAGES_DIR}/story1.jpg'  # Slide 7
+        ],
+        sentences=[
+            # Slide 1
+            "Brighton’s storms were no strangers—grey, thrashing things that rolled off the Channel like clockwork. But this one, the one they’d later call the Birthday Storm, had teeth.",
+            # Slide 2
+            "The Chain Pier, fresh as a painted toy, shuddered under the waves. My father, drowned in his oilskin coat, barked at sightseers to clear off. They lingered, clutching hats and laughing like it was all a lark.",
+            # Slide 3
+            "Then the lightning. No grand omen—just rotten luck. The bolt ripped into the third tower, splintering wood, snapping chains. Planks tore free, skidding into the churn. The crowd’s laughter turned to shrieks.",
+            # Slide 4
+            "Father lunged for a man trapped under the wreckage. A beam gave way. It caught his leg, crushing it flat. I still see it: his knuckles white on the timber, the blood thin and quick in the rain.",
+            # Slide 5
+            "They dragged him home, boot sloshing. The doctor stitched him up, but he walked crooked ever after. The pier? A few gaps in the deck, scorch marks on the towers. Engineers called it a “miracle,” muttered about lightning rods.",
+            # Slide 6
+            "Father snorted. “Birthday Storm,” he’d grumble, kneading his knee when the air turned salt-thick. “Sea’s just remindin’ us who’s boss.” Brighton patched the planks, slapped on fresh paint. Tourists flocked back.",
+            # Slide 7
+            "But whenever the wind snapped, Father’s face went taut, his hand gripping the cane like it was the only thing holding him upright. We build. The sea undoes it."
+
+        ]
+        
     ),
     # -------------------------
 
+    # --- UPDATED ENTRY ---
+    "houseowner2_cutscene": Cutscene(
+        image_paths=[
+            f'{IMAGES_DIR}/story2.jpg' # Updated path
+        ],
+        sentences=[
+            # Updated sentence to match image
+            "A depiction of the terrible storm of 1824. Press Enter to close."
+        ]
+    ),
+
+      # --- UPDATED ENTRY ---
+    "houseowner3_cutscene": Cutscene(
+        image_paths=[
+            f'{IMAGES_DIR}/story3.jpg' # Updated path
+        ],
+        sentences=[
+            # Updated sentence to match image
+            "A depiction of the terrible storm of 1824. Press Enter to close."
+        ]
+    ),  
+
+          # --- UPDATED ENTRY ---
+    "houseowner4_cutscene": Cutscene(
+        image_paths=[
+            f'{IMAGES_DIR}/story4.jpg' # Updated path
+        ],
+        sentences=[
+            # Updated sentence to match image
+            "A depiction of the terrible storm of 1824. Press Enter to close."
+        ]
+    ),  
     # Add more entries here for each 'CutsceneTrigger' value you defined in Tiled
     # "story_trigger_3": Cutscene(...)
 }
