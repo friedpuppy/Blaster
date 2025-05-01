@@ -25,4 +25,10 @@
    <property name="Door" value="houseowner3"/>
   </properties>
  </tile>
+ <tile id="56">
+  <properties>
+   <property name="CutsceneTrigger" value="houseowner4_cutscene"/>
+   <property name="Door" value="houseowner4"/>
+  </properties>
+ </tile>
 </tileset>
