@@ -123,7 +123,12 @@ class DialogueBox(pygame.sprite.Sprite):
             self.font = pygame.font.Font(None, font_size) # Use default font if specified one fails
 
         self.text_color = BLACK # Use constants from config
-        self.background_color = WHITE
+        # Ensure background_color is RGB before adding alpha
+        if len(WHITE) == 4: # Check if WHITE from config is RGBA
+             self.background_color = WHITE[:3] # Take only RGB
+        else:
+             self.background_color = WHITE # Assume it's RGB
+
         self.border_color = DARK_GRAY
         self.border_width = 2
         self.padding = 10
@@ -140,10 +145,18 @@ class DialogueBox(pygame.sprite.Sprite):
 
     def _create_base_surface(self):
         """Creates the background and border surface."""
-        self.image = pygame.Surface((self.width, self.height))
-        self.image.fill(self.background_color)
-        # Draw border onto the image surface
-        pygame.draw.rect(self.image, self.border_color, self.image.get_rect(), self.border_width)
+        # Use SRCALPHA for transparency support
+        self.image = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        # Fill with background color + alpha value (e.g., 200 for semi-transparent)
+        alpha_value = 200 # Adjust 0-255 as needed
+        self.image.fill((*self.background_color, alpha_value))
+
+        # Draw border onto the image surface using the same alpha value
+        # Note: draw.rect doesn't directly support alpha on the surface it draws *to*,
+        # but the color itself can have alpha which affects how it blends if the
+        # target surface (self.image) has SRCALPHA.
+        pygame.draw.rect(self.image, (*self.border_color, alpha_value), self.image.get_rect(), self.border_width)
+
         self.rect = self.image.get_rect(topleft=(self.x, self.y))
 
     def _render_text(self):
@@ -225,6 +238,7 @@ class DialogueBox(pygame.sprite.Sprite):
     def text(self, value):
         """Setter for the text content that automatically updates the surface."""
         self.update_text(value)
+
 
 # --- Dialogue class remains the same ---
 class Dialogue:
@@ -329,7 +343,7 @@ collision_cutscenes: dict[str, Cutscene] = {
          ]
     ),
 
-    # --- UPDATED ENTRY ---
+    # --- STORY1 STORY ONE STORY 1 ---
     "houseowner1_cutscene": Cutscene(
         image_paths=[
             f'{IMAGES_DIR}/story1.jpg', # Slide 1
@@ -342,37 +356,59 @@ collision_cutscenes: dict[str, Cutscene] = {
         ],
         sentences=[
             # Slide 1
-            "Brighton’s storms were no strangers—grey, thrashing things that rolled off the Channel like clockwork. But this one, the one they’d later call the Birthday Storm, had teeth.",
+            "Brighton's storms were no strangers—grey, thrashing things that rolled off the Channel like clockwork. But this one, the one they'd later call the Birthday Storm, had teeth.",
             # Slide 2
             "The Chain Pier, fresh as a painted toy, shuddered under the waves. My father, drowned in his oilskin coat, barked at sightseers to clear off. They lingered, clutching hats and laughing like it was all a lark.",
             # Slide 3
-            "Then the lightning. No grand omen—just rotten luck. The bolt ripped into the third tower, splintering wood, snapping chains. Planks tore free, skidding into the churn. The crowd’s laughter turned to shrieks.",
+            "Then the lightning. No grand omen—just rotten luck. The bolt ripped into the third tower, splintering wood, snapping chains. Planks tore free, skidding into the churn. The crowd's laughter turned to shrieks.",
             # Slide 4
             "Father lunged for a man trapped under the wreckage. A beam gave way. It caught his leg, crushing it flat. I still see it: his knuckles white on the timber, the blood thin and quick in the rain.",
             # Slide 5
             "They dragged him home, boot sloshing. The doctor stitched him up, but he walked crooked ever after. The pier? A few gaps in the deck, scorch marks on the towers. Engineers called it a “miracle,” muttered about lightning rods.",
             # Slide 6
-            "Father snorted. “Birthday Storm,” he’d grumble, kneading his knee when the air turned salt-thick. “Sea’s just remindin’ us who’s boss.” Brighton patched the planks, slapped on fresh paint. Tourists flocked back.",
+            "Father snorted. “Birthday Storm,” he'd grumble, kneading his knee when the air turned salt-thick. “Sea's just remindin' us who’s boss.” Brighton patched the planks, slapped on fresh paint. Tourists flocked back.",
             # Slide 7
-            "But whenever the wind snapped, Father’s face went taut, his hand gripping the cane like it was the only thing holding him upright. We build. The sea undoes it."
+            "But whenever the wind snapped, Father's face went taut, his hand gripping the cane like it was the only thing holding him upright. We build. The sea undoes it."
 
         ]
         
     ),
     # -------------------------
 
-    # --- UPDATED ENTRY ---
+    # --- STORY2 STORY TWO STORY 2 ---
     "houseowner2_cutscene": Cutscene(
         image_paths=[
-            f'{IMAGES_DIR}/story2.jpg' # Updated path
+            f'{IMAGES_DIR}/story2.jpg', # Slide 1
+            f'{IMAGES_DIR}/story2.jpg', # Slide 2
+            f'{IMAGES_DIR}/story2.jpg', # Slide 3
+            f'{IMAGES_DIR}/story2.jpg', # Slide 4
+            f'{IMAGES_DIR}/story2.jpg', # Slide 5  
+            f'{IMAGES_DIR}/story2.jpg', # Slide 6
+            f'{IMAGES_DIR}/story2.jpg', # Slide 7                                    
+            f'{IMAGES_DIR}/story2.jpg', # Slide 8                                    
         ],
         sentences=[
-            # Updated sentence to match image
-            "A depiction of the terrible storm of 1824. Press Enter to close."
+            # Slide 1
+            "The woman taps the watercolour above her mantel. “That's *Brighthelmston* by Turner—1824, just after the pier opened. Come, look closer.”",
+            # Slide 2
+            "She points to the foreground, where a small boat battles the waves. “See how he paints the crew? Just smudges of ochre and white, but you *feel* them fighting the swell. Not heroes, just fools in the wrong place. Like most of us.”",
+            # Slide 3
+            "You squint. The boat's sails twist like crumpled paper.",
+            # Slide 4
+            "“Now follow the pier.” Her finger trails the iron chains, stark against the storm. “Brown’s design—all geometry and pride. But Turner *mocks* it. See the rainbow?” A spectral arc glows above the chaos.",
+            # Slide 5
+            "“Pretty, isn't it? A lie. That's the sublime—beauty that could kill you. The pier's man's answer to the sea. Turner paints the *argument*.”",
+            # Slide 6
+            "You mutter something about the buildings onshore. “Ah, the Pavilion!” She laughs. “He cheated, turned it sideways to fit the composition. *Picturesque* nonsense. But the details!”",
+            # Slide 7
+            "She plucks a magnifying glass from her desk. “St. Nicholas’s spire, the Duke of York’s Hotel… all here. Even the half-built Marine Parade. History in a storm.”",
+            # Slide 8
+            "Her tone softens. “The rainbow’s the joke, though. We build piers, ships, promenades. Nature builds tempests. Turner knew which’d last.” She hands you the glass. “Keep looking. That boat’s still sinking.”"
         ]
+
     ),
 
-      # --- UPDATED ENTRY ---
+      # --- STORY 3 STORY THREE STORY3 ---
     "houseowner3_cutscene": Cutscene(
         image_paths=[
             f'{IMAGES_DIR}/story3.jpg' # Updated path
@@ -383,14 +419,14 @@ collision_cutscenes: dict[str, Cutscene] = {
         ]
     ),  
 
-          # --- UPDATED ENTRY ---
+          # --- GO AWAY ---
     "houseowner4_cutscene": Cutscene(
         image_paths=[
-            f'{IMAGES_DIR}/story4.jpg' # Updated path
+            None,
         ],
         sentences=[
             # Updated sentence to match image
-            "A depiction of the terrible storm of 1824. Press Enter to close."
+            "Go away."
         ]
     ),  
     # Add more entries here for each 'CutsceneTrigger' value you defined in Tiled
