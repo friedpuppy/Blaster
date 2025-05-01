@@ -543,10 +543,18 @@ class Game:
 
                 # --- Draw UI Elements ---
                 # Example FPS counter (uncomment if needed)
-                # if self.ui_font:
-                #    fps_text = f"FPS: {self.clock.get_fps():.1f}"
-                #    fps_surf = self.ui_font.render(fps_text, True, config.WHITE)
-                #    self.screen.blit(fps_surf, (10, 10))
+                if self.ui_font:
+                    # --- FPS Counter Removed ---
+                    # fps_text = f"FPS: {self.clock.get_fps():.1f}"
+                    # fps_surf = self.ui_font.render(fps_text, True, config.WHITE)
+                    # fps_rect = fps_surf.get_rect(topleft=(10, 10))
+                    # self.screen.blit(fps_surf, fps_rect)
+
+                    # Draw Global Accumulator Value in the top-left
+                    acc_text = f"Pier Restoration funds: £{accumulator}" # Changed label, still accesses global accumulator
+                    acc_surf = self.ui_font.render(acc_text, True, config.WHITE)
+                    acc_rect = acc_surf.get_rect(topleft=(10, 10)) # Position independently
+                    self.screen.blit(acc_surf, acc_rect)
 
                 # Draw test dialogue box if active
                 if hasattr(self, 'test_dialogue_box'):
