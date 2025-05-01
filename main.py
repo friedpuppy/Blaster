@@ -101,7 +101,11 @@ class Game:
         self.test_dialogue_box = DialogueBox(self, test_message, dialogue_box_x, dialogue_box_y)
 
         # --- Initial Map Load ---
-        self.load_map('pier') # Start on the pier map
+        #self.load_map('pier') # Start on the pier map
+
+        # --- Debug Map Load ---
+        self.load_map('streets') # Start on the streets map
+
 
     def load_map(self, map_key: str) -> None:
         """Loads and configures a new map."""
