@@ -98,11 +98,11 @@
             }
         },
         "pier_map.tmx": {
-            "scale": 0.75,
+            "scale": 1,
             "selectedLayer": 6,
             "viewCenter": {
-                "x": 972.6666666666666,
-                "y": 553.3333333333334
+                "x": 920.5,
+                "y": 551
             }
         },
         "sea.tmx": {
@@ -127,11 +127,11 @@
             }
         },
         "streets_map.tmx": {
-            "scale": 0.5,
+            "scale": 4,
             "selectedLayer": 2,
             "viewCenter": {
-                "x": 479,
-                "y": 526
+                "x": 1010.625,
+                "y": 121.25
             }
         },
         "trees-and-bushes.tsx": {
@@ -150,6 +150,7 @@
     "project": "pier_to_the_past.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "sea.tmx",
         "streets_map copy.tmx",
         "pier_map - Copy.tmx",
         "streets_map.tmx",
@@ -160,8 +161,7 @@
         "pier_map.tmx",
         "obj_misk_atlas.tsx",
         "palace_map.tmx",
-        "mayor.tsx",
-        "sea.tmx"
+        "mayor.tsx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx",
