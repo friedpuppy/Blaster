@@ -1,12 +1,13 @@
-# main.py
+# \\synology\sharedDrive\CALLUM\EDUCATION\2022-2025 Brighton University\3-YEAR THREE\CI601 The Computing Project\GAME DEVELOPMENT\Master\sharedDrive\CALLUM\EDUCATION\2022-2025 Brighton University\3-YEAR THREE\CI601 The Computing Project\GAME DEVELOPMENT\Master\main.py
 # Author: Callum Donnelly
 # Date: 2025-04-30 (or update to current date)
 # Description: Main entry point for the game. Initializes Pygame,
 #              manages the game loop, handles map loading and transitions,
 #              and coordinates updates and drawing of game elements.
+#              Includes cutscene handling with background music.
 #
 # References Local Files:
-#   - config.py: Loads game settings, constants, and file paths.
+#   - config.py: Loads game settings, constants, and file paths (including MAP_MUSIC_PATHS).
 #   - sprites.py: Uses Player and NPC sprite classes defined therein.
 #   - dialogue.py: Uses Cutscene class and collision_cutscenes data.
 
@@ -15,9 +16,11 @@ import pytmx # For loading Tiled map files (.tmx)
 import pyscroll # For rendering Tiled maps efficiently
 from pytmx.util_pygame import load_pygame # Pygame-specific Tiled loader utility
 from typing import Optional, Dict, List # Used for type hinting
+import os # Needed for checking music file existence
+import traceback # For better error reporting
+
 # Import necessary classes/data from dialogue.py
 from dialogue import DialogueBox, dialogues, Cutscene, collision_cutscenes, render_textrect, TextRectException
-
 
 # Import from our custom modules
 import config  # Game configuration variables
@@ -49,6 +52,9 @@ class Game:
         # Keep track of the last tile's properties for event triggering
         self.last_event_tile_properties: Optional[Dict] = None
 
+        # --- Music State ---
+        self.current_background_music_path: Optional[str] = None # Track currently playing BGM
+
         # --- Game State ---
         self.game_state: str = 'playing' # 'playing', 'cutscene', 'paused', etc.
 
@@ -59,6 +65,7 @@ class Game:
         self.cutscene_text_surface: Optional[pygame.Surface] = None
         # Removed the cutscene_triggers group
         self.triggered_cutscenes = set() # Keep track of which cutscenes have been played (per map load)
+        self.cutscene_music_fadeout_time = 500 # Milliseconds for music fade-out
 
         # --- Font Initialization ---
         try:
@@ -86,13 +93,18 @@ class Game:
         mayor_start_y = 450
         self.mayor = sprites.Mayor(mayor_start_x, mayor_start_y)
         try:
+            # Ensure config has the correct image constants defined
             self.houseowner0 = sprites.Houseowner(100, 105, config.HOUSEOWNER_DEFAULT_IMAGE)
             self.houseowner1 = sprites.Houseowner(350, 105, config.HOUSEOWNER_ONE_IMAGE)
             self.houseowner2 = sprites.Houseowner(650, 105, config.HOUSEOWNER_TWO_IMAGE)
             self.houseowner3 = sprites.Houseowner(920, 105, config.HOUSEOWNER_THREE_IMAGE)
         except AttributeError as e:
-             print(f"Error initializing Houseowners: {e}")
+             print(f"Error initializing Houseowners (check image constants in config.py): {e}")
              self.houseowner0 = self.houseowner1 = self.houseowner2 = self.houseowner3 = None
+        except Exception as e: # Catch other potential errors during init
+             print(f"Unexpected error initializing Houseowners: {e}")
+             self.houseowner0 = self.houseowner1 = self.houseowner2 = self.houseowner3 = None
+
 
         # --- Dialogue Box Initialization (for testing/other uses) ---
         dialogue_box_x = (config.SCREEN_WIDTH / 2) - 300
@@ -101,14 +113,14 @@ class Game:
         self.test_dialogue_box = DialogueBox(self, test_message, dialogue_box_x, dialogue_box_y)
 
         # --- Initial Map Load ---
-        #self.load_map('pier') # Start on the pier map
+        self.load_map('pier') # Start on the pier map
 
         # --- Debug Map Load ---
-        self.load_map('streets') # Start on the streets map
+        #self.load_map('streets') # Start on the streets map
 
 
     def load_map(self, map_key: str) -> None:
-        """Loads and configures a new map."""
+        """Loads and configures a new map, including background music."""
         print(f"Loading map: {map_key}")
         try:
             if map_key not in config.MAP_PATHS:
@@ -152,9 +164,35 @@ class Game:
             self.current_map_key = map_key
             print(f"Map '{map_key}' loaded successfully.")
 
+            # --- Start Map Specific Background Music ---
+            # Check if MAP_MUSIC_PATHS exists in config, otherwise default to empty dict
+            map_music_config = getattr(config, 'MAP_MUSIC_PATHS', {})
+            target_music_path = map_music_config.get(map_key) # Get path from config, defaults to None
+
+            if target_music_path:
+                # Check if the target music isn't already playing
+                if self.current_background_music_path != target_music_path:
+                    if os.path.exists(target_music_path):
+                        try:
+                            pygame.mixer.music.load(target_music_path)
+                            pygame.mixer.music.play(loops=-1, fade_ms=config.MAP_MUSIC_FADE_MS)
+                            self.current_background_music_path = target_music_path
+                            print(f"Playing map music: {target_music_path}")
+                        except pygame.error as e:
+                            print(f"Error loading/playing map music '{target_music_path}': {e}")
+                            self.current_background_music_path = None # Ensure state is correct on error
+                    else:
+                        print(f"Warning: Map music file not found: {target_music_path}")
+                        self.current_background_music_path = None # Ensure state is correct
+            else:
+                # If map has no music defined (target_music_path is None), fade out whatever was playing
+                if self.current_background_music_path is not None:
+                    print(f"Fading out previous music for map '{map_key}' (no new music defined).")
+                    pygame.mixer.music.fadeout(config.MAP_MUSIC_FADE_MS)
+                    self.current_background_music_path = None
+
         except (KeyError, FileNotFoundError, ValueError, pygame.error, Exception) as e:
             print(f"Error loading map '{map_key}': {type(e).__name__} - {e}")
-            import traceback
             traceback.print_exc()
             self.running = False
 
@@ -219,7 +257,7 @@ class Game:
                 print(f"Player entered tile with CutsceneTrigger: {current_trigger_key}")
                 # Check if the cutscene exists and hasn't been played on this map load
                 if current_trigger_key in collision_cutscenes and current_trigger_key not in self.triggered_cutscenes:
-                    self.start_cutscene(current_trigger_key)
+                    self.start_cutscene(current_trigger_key) # Start the cutscene
                 elif current_trigger_key in self.triggered_cutscenes:
                      print(f"  Cutscene '{current_trigger_key}' already triggered on this map load.")
                 elif current_trigger_key not in collision_cutscenes:
@@ -269,7 +307,7 @@ class Game:
     # --- Cutscene Methods ---
 
     def start_cutscene(self, cutscene_key: str) -> None:
-        """Initiates a cutscene based on the provided key."""
+        """Initiates a cutscene based on the provided key, including music."""
         if self.game_state == 'cutscene':
             print("Warning: Tried to start a cutscene while one is already active.")
             return # Don't start a new one if already in a cutscene
@@ -280,6 +318,29 @@ class Game:
             self.current_cutscene_slide = 0
             self.game_state = 'cutscene'
             self.triggered_cutscenes.add(cutscene_key) # Mark as played for this map load
+
+            # --- Music Handling ---
+            # Fade out any currently playing music (e.g., map music)
+            pygame.mixer.music.fadeout(self.cutscene_music_fadeout_time)
+            self.current_background_music_path = None # Clear tracker as map music stopped
+
+            # Load and play the cutscene-specific music if available
+            if self.active_cutscene.music_path:
+                music_path = self.active_cutscene.music_path
+                if os.path.exists(music_path):
+                    try:
+                        pygame.mixer.music.load(music_path)
+                        # Play looping, start immediately (no fade-in here, but possible)
+                        pygame.mixer.music.play(loops=-1)
+                        print(f"Playing cutscene music: {music_path}")
+                    except pygame.error as e:
+                        print(f"Error loading or playing cutscene music '{music_path}': {e}")
+                else:
+                    print(f"Warning: Cutscene music file not found: '{music_path}'")
+            else:
+                print("Cutscene has no associated music.")
+            # --------------------
+
             self._load_cutscene_slide() # Load the first slide's assets
         else:
             # This case should be less likely now as the check happens in check_tile_events
@@ -363,8 +424,38 @@ class Game:
             self._load_cutscene_slide() # Load the next slide
 
     def _end_cutscene(self) -> None:
-        """Cleans up after a cutscene finishes and returns to gameplay."""
+        """Cleans up after a cutscene finishes, fades out music, and returns to gameplay."""
         print("Ending cutscene.")
+
+        # --- Music Handling ---
+        # Fade out the cutscene music
+        pygame.mixer.music.fadeout(self.cutscene_music_fadeout_time) # Fade out cutscene track
+        # Optional: Add a small delay to allow fadeout before potentially starting map music
+        # pygame.time.wait(self.cutscene_music_fadeout_time)
+
+        # --- Resume Map Specific Music if Applicable ---
+        # Check if MAP_MUSIC_PATHS exists in config, otherwise default to empty dict
+        map_music_config = getattr(config, 'MAP_MUSIC_PATHS', {})
+        target_music_path = map_music_config.get(self.current_map_key) # Get path for current map
+
+        if target_music_path:
+            if os.path.exists(target_music_path):
+                try:
+                    pygame.mixer.music.load(target_music_path)
+                    pygame.mixer.music.play(loops=-1, fade_ms=config.MAP_MUSIC_FADE_MS) # Fade in map music
+                    self.current_background_music_path = target_music_path
+                    print(f"Resuming map music: {target_music_path}")
+                except pygame.error as e:
+                    print(f"Error resuming map music '{target_music_path}': {e}")
+                    self.current_background_music_path = None # Ensure state is correct on error
+            else:
+                 print(f"Warning: Map music file not found, cannot resume: {target_music_path}")
+                 self.current_background_music_path = None # Ensure state is correct
+        else:
+            # If the map has no music defined, ensure the tracker is cleared
+            self.current_background_music_path = None
+        # --------------------
+
         self.game_state = 'playing'
         self.active_cutscene = None
         self.current_cutscene_slide = 0
@@ -379,6 +470,7 @@ class Game:
         """Contains the main game loop."""
         print("Starting game loop...")
         while self.running:
+            # Calculate delta time for frame-rate independent movement/updates
             dt = self.clock.tick(config.FPS) / 1000.0
 
             # --- Game Loop Stages ---
@@ -416,8 +508,8 @@ class Game:
         """Updates the game state based on the current game_state."""
         if self.game_state == 'playing':
             if self.group:
-                # Update sprites (includes player movement)
-                self.group.update(dt)
+                # Update sprites (includes player movement, passing dt)
+                self.group.update(dt) # Pass delta time to sprites that might need it
                 # Center camera on player
                 self.group.center(self.player.rect.center)
                 # Check for tile-based events (including cutscene triggers)
@@ -434,12 +526,13 @@ class Game:
     def draw(self) -> None:
         """Renders the current game scene based on the game_state."""
         if self.game_state == 'playing':
-            # --- Draw Gameplay Scene (remains the same) ---
+            # --- Draw Gameplay Scene ---
             if self.group and self.map_layer:
                 self.group.draw(self.screen)
 
                 # --- Draw UI Elements ---
-                #if self.ui_font:
+                # Example FPS counter (uncomment if needed)
+                # if self.ui_font:
                 #    fps_text = f"FPS: {self.clock.get_fps():.1f}"
                 #    fps_surf = self.ui_font.render(fps_text, True, config.WHITE)
                 #    self.screen.blit(fps_surf, (10, 10))
@@ -448,7 +541,7 @@ class Game:
                 if hasattr(self, 'test_dialogue_box'):
                     self.test_dialogue_box.draw(self.screen)
 
-                # --- DEBUG: Draw Player Hitbox ---
+                # --- DEBUG: Draw Player Hitbox (uncomment if needed) ---
                 # pygame.draw.rect(self.screen, (255, 0, 0), self.player.hitbox, 1)
 
 
@@ -498,17 +591,29 @@ def main() -> None:
     pygame.init()
     print("Pygame initialized successfully.")
 
+    # --- Initialize the Mixer ---
+    try:
+        pygame.mixer.init()
+        print("Pygame mixer initialized successfully.")
+        # Optional: Set default music volume
+        # pygame.mixer.music.set_volume(0.7) # 0.0 to 1.0
+    except pygame.error as e:
+        print(f"Warning: Could not initialize Pygame mixer: {e}")
+        # Game can potentially continue without sound
+    # ---------------------------
+
     # --- Set the Window Icon ---
     try:
         # Construct the full path to the icon using config
         icon_path = f"{config.IMAGES_DIR}/game_icon.png" # Or your actual icon filename
-        icon_surface = pygame.image.load(icon_path)
-        pygame.display.set_icon(icon_surface)
-        print(f"Window icon set from: {icon_path}")
+        if os.path.exists(icon_path):
+            icon_surface = pygame.image.load(icon_path)
+            pygame.display.set_icon(icon_surface)
+            print(f"Window icon set from: {icon_path}")
+        else:
+            print(f"Warning: Icon file not found at: {icon_path}")
     except pygame.error as e:
         print(f"Warning: Could not load or set window icon: {e}")
-    except FileNotFoundError:
-        print(f"Warning: Icon file not found at: {icon_path}")
     # --------------------------
 
     screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
@@ -523,7 +628,6 @@ def main() -> None:
     except Exception as e:
         print(f"\n--- An unexpected error occurred during game execution ---")
         print(f"{type(e).__name__}: {e}")
-        import traceback
         traceback.print_exc()
         print("----------------------------------------------------------")
 

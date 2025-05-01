@@ -18,6 +18,7 @@ DARK_GRAY = (96,89,88)
 ASSETS_DIR = './Assets'
 IMAGES_DIR = f'{ASSETS_DIR}/Images'
 MAPS_DIR = f'{ASSETS_DIR}/Maps'
+MUSIC_DIR = f'{ASSETS_DIR}/Sounds'
 
 PIERMASTER_IMAGE: str = f'{IMAGES_DIR}/piermaster.png'
 PLAYER_IMAGE: str = f'{IMAGES_DIR}/gentleman.png'
@@ -35,6 +36,17 @@ MAP_PATHS: dict[str, str] = {
     'palace': f"{MAPS_DIR}/palace_map.tmx",
     'streets': f"{MAPS_DIR}/streets_map.tmx"
 }
+
+
+# Map Specific Music Settings
+MAP_MUSIC_PATHS: dict[str, str | None] = {
+    'pier': f'{MUSIC_DIR}/ReachingOut.mp3',
+    'palace': f'{MUSIC_DIR}/Autumn Day.mp3', # Make sure 'Autumn Day.mp3' exists
+    'streets': f'{MUSIC_DIR}/When The Wind Blows.mp3' # Make sure 'When The Wind Blows.mp3' exists
+    # Add other maps here if they have music, or None if they don't
+}
+MAP_MUSIC_FADE_MS: int = 1000 # Fade duration for map music (in/out)
+
 
 # Player Settings
 PLAYER_SPEED: int = 5

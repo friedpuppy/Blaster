@@ -2,6 +2,7 @@
 import pygame
 from config import * # Assuming config defines colors like WHITE, BLACK, DARK_GRAY etc.
 # from sprites import * # Assuming sprites isn't strictly needed for DialogueBox itself
+import os # Import os for path joining
 
 # --- TextRectException and render_textrect remain the same ---
 class TextRectException(Exception): # Inherit from Exception for better practice
@@ -117,10 +118,21 @@ class DialogueBox(pygame.sprite.Sprite):
         self.width = width
         self.height = height
         try:
-            self.font = pygame.font.Font(font_name, font_size)
+            # Try loading from assets/fonts if it exists, otherwise use the name directly
+            font_path = os.path.join(ASSETS_DIR, 'Fonts', font_name)
+            if os.path.exists(font_path):
+                 self.font = pygame.font.Font(font_path, font_size)
+                 print(f"Loaded font: {font_path}")
+            else:
+                 # Fallback to system font or just the name if it's a system font
+                 self.font = pygame.font.Font(font_name, font_size)
+                 print(f"Loaded system/fallback font: {font_name}")
         except FileNotFoundError:
-            print(f"Warning: Font '{font_name}' not found. Using default Pygame font.")
+            print(f"Warning: Font '{font_name}' not found (checked assets/fonts and system). Using default Pygame font.")
             self.font = pygame.font.Font(None, font_size) # Use default font if specified one fails
+        except pygame.error as e:
+             print(f"Error loading font '{font_name}': {e}. Using default Pygame font.")
+             self.font = pygame.font.Font(None, font_size)
 
         self.text_color = BLACK # Use constants from config
         # Ensure background_color is RGB before adding alpha
@@ -276,22 +288,24 @@ class Dialogue:
         """Resets the dialogue back to the first line."""
         self.current_line = 0
 
-# --- Cutscene class remains largely the same, ensure it takes lists ---
+# --- Updated Cutscene class ---
 class Cutscene:
-    # ... (Cutscene class definition) ...
-    """Represents a sequence of images and corresponding text lines for a cutscene."""
-    def __init__(self, image_paths: list[str | None], sentences: list[str]):
+    """Represents a sequence of images, corresponding text lines, and optional background music for a cutscene."""
+    def __init__(self, image_paths: list[str | None], sentences: list[str], music_path: str | None = None):
         """
         Args:
             image_paths (list[str | None]): A list of file paths to the images for each slide.
                                             Use None for slides with no image (e.g., black screen).
             sentences (list[str]): A list of text strings for each slide.
                                    Should have the same length as image_paths.
+            music_path (str | None, optional): File path to the background music for this cutscene.
+                                               Defaults to None (no music).
         """
         if len(image_paths) != len(sentences):
             raise ValueError("Cutscene image_paths and sentences lists must have the same length.")
         self.image_paths = image_paths
         self.sentences = sentences
+        self.music_path = music_path # Store the music path
         self.num_slides = len(sentences) # Store the total number of slides
 
 # --- Cleaned dialogues dictionary ---
@@ -314,8 +328,10 @@ dialogues = {
     # Add more as needed...
 }
 
-# --- NEW: Dictionary for Collision-Triggered Cutscenes ---
+# --- Updated Dictionary for Collision-Triggered Cutscenes ---
 # The keys (e.g., "story1") MUST match the 'CutsceneTrigger' property values set in Tiled.
+# Added the music_path argument to each Cutscene instance.
+# Replace placeholder paths with your actual music file paths.
 collision_cutscenes: dict[str, Cutscene] = {
     "intro_story": Cutscene( # Example key, replace with your Tiled value
         image_paths=[
@@ -330,7 +346,8 @@ collision_cutscenes: dict[str, Cutscene] = {
             "The second bridge is hanging down almost touching the sea, a testament to the storm's fury.",
             "Only the twisted ropes of the third bridge remain, dangling uselessly over the churning waves.",
             "Work to repair it must be commenced as soon as possible, for without the Pier, the town's lifeline to the sea is severed!"
-        ]
+        ],
+        music_path=f'{ASSETS_DIR}/Music/intro_theme.ogg' # Example music path
     ),
     "another_story": Cutscene( # Example for a second trigger
          image_paths=[
@@ -340,7 +357,8 @@ collision_cutscenes: dict[str, Cutscene] = {
          sentences=[
              "This is the first part of another story, triggered by a different collision.",
              "And this is the concluding slide for that story. Press Enter to return to the game.",
-         ]
+         ],
+         music_path=f'{ASSETS_DIR}/Music/another_story_music.ogg' # Example music path
     ),
 
     # --- STORY1 STORY ONE STORY 1 ---
@@ -369,9 +387,8 @@ collision_cutscenes: dict[str, Cutscene] = {
             "Father snorted. “Birthday Storm,” he'd grumble, kneading his knee when the air turned salt-thick. “Sea's just remindin' us who’s boss.” Brighton patched the planks, slapped on fresh paint. Tourists flocked back.",
             # Slide 7
             "But whenever the wind snapped, Father's face went taut, his hand gripping the cane like it was the only thing holding him upright. We build. The sea undoes it."
-
-        ]
-        
+        ],
+        music_path=f'{ASSETS_DIR}/Music/story1_theme.ogg' # Example music path for story 1
     ),
     # -------------------------
 
@@ -382,10 +399,10 @@ collision_cutscenes: dict[str, Cutscene] = {
             f'{IMAGES_DIR}/story2.jpg', # Slide 2
             f'{IMAGES_DIR}/story2.jpg', # Slide 3
             f'{IMAGES_DIR}/story2.jpg', # Slide 4
-            f'{IMAGES_DIR}/story2.jpg', # Slide 5  
+            f'{IMAGES_DIR}/story2.jpg', # Slide 5
             f'{IMAGES_DIR}/story2.jpg', # Slide 6
-            f'{IMAGES_DIR}/story2.jpg', # Slide 7                                    
-            f'{IMAGES_DIR}/story2.jpg', # Slide 8                                    
+            f'{IMAGES_DIR}/story2.jpg', # Slide 7
+            f'{IMAGES_DIR}/story2.jpg', # Slide 8
         ],
         sentences=[
             # Slide 1
@@ -404,8 +421,8 @@ collision_cutscenes: dict[str, Cutscene] = {
             "She plucks a magnifying glass from her desk. “St. Nicholas’s spire, the Duke of York’s Hotel… all here. Even the half-built Marine Parade. History in a storm.”",
             # Slide 8
             "Her tone softens. “The rainbow’s the joke, though. We build piers, ships, promenades. Nature builds tempests. Turner knew which’d last.” She hands you the glass. “Keep looking. That boat’s still sinking.”"
-        ]
-
+        ],
+        music_path=f'{ASSETS_DIR}/Music/story2_theme.ogg' # Example music path for story 2
     ),
 
       # --- STORY 3 STORY THREE STORY3 ---
@@ -416,8 +433,9 @@ collision_cutscenes: dict[str, Cutscene] = {
         sentences=[
             # Updated sentence to match image
             "A depiction of the terrible storm of 1824. Press Enter to close."
-        ]
-    ),  
+        ],
+        music_path=f'{ASSETS_DIR}/Music/story3_theme.ogg' # Example music path for story 3
+    ),
 
           # --- GO AWAY ---
     "houseowner4_cutscene": Cutscene(
@@ -427,23 +445,21 @@ collision_cutscenes: dict[str, Cutscene] = {
         sentences=[
             # Updated sentence to match image
             "Go away."
-        ]
-    ),  
+        ],
+        music_path=None # No music for this one
+    ),
     # Add more entries here for each 'CutsceneTrigger' value you defined in Tiled
     # "story_trigger_3": Cutscene(...)
 }
 
-# --- Cutscene class (from original file, now potentially redundant if using collision_cutscenes) ---
-# You can keep this if you use it elsewhere, or remove it if collision_cutscenes replaces its use case.
-# class Cutscene:
+# --- Old Cutscene class and dictionary (commented out or removed if no longer needed) ---
+# class Cutscene_Old:
 #     def __init__(self, sentences, images):
 #         self.sentences = sentences
 #         self.images = images
 
-# --- cutscenes dictionary (from original file, now potentially redundant) ---
-# Keep or remove based on whether you still need the 'intro' cutscene triggered differently.
-# cutscenes = {
-#     "intro": Cutscene(
+# cutscenes_old = {
+#     "intro": Cutscene_Old(
 #         sentences=[ ... ], images=[ ... ]
 #     )
 # }
