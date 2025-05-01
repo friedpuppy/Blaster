@@ -26,6 +26,9 @@ from dialogue import DialogueBox, dialogues, Cutscene, collision_cutscenes, rend
 import config  # Game configuration variables
 import sprites # Game sprite classes (Player, NPCs, etc.)
 
+# --- Global Variables ---
+accumulator: int = 0 # Example global variable
+
 # --- TriggerSprite class is removed as it's no longer needed ---
 
 class Game:
@@ -252,12 +255,20 @@ class Game:
             current_trigger_key = current_tile_properties.get('CutsceneTrigger')
             last_trigger_key = self.last_event_tile_properties.get('CutsceneTrigger') if self.last_event_tile_properties else None
 
-            # Check if we stepped onto a NEW tile with a CutsceneTrigger
+                        # Check if we stepped onto a NEW tile with a CutsceneTrigger
             if current_trigger_key is not None and current_trigger_key != last_trigger_key:
                 print(f"Player entered tile with CutsceneTrigger: {current_trigger_key}")
+                # --- Access and modify the GLOBAL accumulator ---
+                global accumulator # Declare intent to modify the global variable
+                accumulator = accumulator + 100
+                print(f"Global Accumulator is now: {accumulator}")
+                # -------------------------------------------------
+
                 # Check if the cutscene exists and hasn't been played on this map load
                 if current_trigger_key in collision_cutscenes and current_trigger_key not in self.triggered_cutscenes:
                     self.start_cutscene(current_trigger_key) # Start the cutscene
+                # ... rest of the logic ...
+
                 elif current_trigger_key in self.triggered_cutscenes:
                      print(f"  Cutscene '{current_trigger_key}' already triggered on this map load.")
                 elif current_trigger_key not in collision_cutscenes:
