@@ -35,6 +35,7 @@ def render_textrect(string, font, rect, text_color, background_color, justificat
     Raises
         TextRectException if the text cannot fit.
     """
+    # print(f"--- render_textrect received font: {font}") # Debug print removed
     final_lines = []
     requested_lines = string.splitlines()
 
@@ -71,13 +72,6 @@ def render_textrect(string, font, rect, text_color, background_color, justificat
 
     for i, line in enumerate(final_lines):
         if accumulated_height + line_spacing > rect.height:
-            # Optional: Add an indicator like "..." if text overflows vertically
-            # if i > 0: # Check if there was at least one previous line
-            #     prev_line_surf = surface.copy() # Keep previous state
-            #     ellipsis_surf = font.render("...", True, text_color)
-            #     ellipsis_rect = ellipsis_surf.get_rect(bottomright=(rect.width, accumulated_height))
-            #     # Blit ellipsis slightly overlapping the last visible line's bottom
-            #     surface.blit(ellipsis_surf, ellipsis_rect)
 
             print(f"Warning: Text truncated. Content height ({accumulated_height + line_spacing}px) exceeds rect height ({rect.height}px).")
             break # Stop rendering lines that won't fit
@@ -119,19 +113,23 @@ class DialogueBox(pygame.sprite.Sprite):
         self.height = height
         try:
             # Try loading from assets/fonts if it exists, otherwise use the name directly
-            font_path = os.path.join(ASSETS_DIR, 'Fonts', font_name)
+            # Ensure font_name includes the extension
+            font_path = os.path.abspath(os.path.join(ASSETS_DIR, 'Fonts', font_name)) # Get absolute path for clarity
             if os.path.exists(font_path):
-                 self.font = pygame.font.Font(font_path, font_size)
-                 print(f"Loaded font: {font_path}")
+                 # print(f"Attempting to load font from path: {font_path}") # Debug print removed
+                 self.font = pygame.font.Font(font_path, font_size) # Attempt load
+                 # print(f"Successfully created font object from path: {self.font}") # Debug print removed
             else:
+                 print(f"Font file not found at: {font_path}. Attempting system font: {font_name}")
                  # Fallback to system font or just the name if it's a system font
                  self.font = pygame.font.Font(font_name, font_size)
-                 print(f"Loaded system/fallback font: {font_name}")
+                 # print(f"Successfully created font object from system/name: {self.font}") # Debug print removed
         except FileNotFoundError:
-            print(f"Warning: Font '{font_name}' not found (checked assets/fonts and system). Using default Pygame font.")
+            # This specific error is less likely now with the os.path.exists check, but good to keep
+            print(f"ERROR (FileNotFoundError): Font '{font_name}' not found. Using default Pygame font.")
             self.font = pygame.font.Font(None, font_size) # Use default font if specified one fails
         except pygame.error as e:
-             print(f"Error loading font '{font_name}': {e}. Using default Pygame font.")
+             print(f"ERROR (pygame.error): Failed to load font '{font_name}' from path '{font_path if 'font_path' in locals() else 'N/A'}': {e}. Using default Pygame font.")
              self.font = pygame.font.Font(None, font_size)
 
         self.text_color = BLACK # Use constants from config
@@ -187,6 +185,7 @@ class DialogueBox(pygame.sprite.Sprite):
         text_render_rect = pygame.Rect(0, 0, text_area_width, text_area_height)
 
         try:
+            # print(f"--- DialogueBox._render_text using font: {self.font}") # Debug print removed
             # Render text using the utility function. Pass SRCALPHA for transparency.
             self.text_surface = render_textrect(
                 self._text,
@@ -460,15 +459,3 @@ collision_cutscenes: dict[str, Cutscene] = {
     # Add more entries here for each 'CutsceneTrigger' value you defined in Tiled
     # "story_trigger_3": Cutscene(...)
 }
-
-# --- Old Cutscene class and dictionary (commented out or removed if no longer needed) ---
-# class Cutscene_Old:
-#     def __init__(self, sentences, images):
-#         self.sentences = sentences
-#         self.images = images
-
-# cutscenes_old = {
-#     "intro": Cutscene_Old(
-#         sentences=[ ... ], images=[ ... ]
-#     )
-# }

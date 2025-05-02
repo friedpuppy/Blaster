@@ -182,8 +182,8 @@ class Game:
                 self.group.add(self.mayor)
             elif map_key == 'streets':
                 # Add houseowners if they exist
-                for ho in [self.houseowner0, self.houseowner1, self.houseowner2, self.houseowner3]:
-                    if ho: self.group.add(ho)
+                for houseowner in self.houseowners: # Iterate through the list
+                    if houseowner: self.group.add(houseowner) # Add each one if it exists
 
                 # --- Object Trigger Loading is Removed ---
 
