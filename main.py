@@ -66,6 +66,8 @@ class Game:
         self.current_cutscene_slide: int = 0
         self.cutscene_image_surface: Optional[pygame.Surface] = None
         self.cutscene_text_surface: Optional[pygame.Surface] = None
+        self.cutscene_text_bg_rect: Optional[pygame.Rect] = None # Rect for the text background box
+        self.cutscene_text_padding: int = 15 # Pixels of padding inside the text box
         # Removed the cutscene_triggers group
         self.triggered_cutscenes = set() # Keep track of which cutscenes have been played (per map load)
         self.cutscene_music_fadeout_time = 500 # Milliseconds for music fade-out
@@ -74,10 +76,25 @@ class Game:
         try:
             # Font for general UI (like FPS counter)
             self.ui_font = pygame.font.Font(None, 30)
+            # Font for the funds display (using your custom font)
+            funds_font_name = 'White On Black.ttf'
+            funds_font_size = 30 # Or adjust as needed
+            funds_font_path = os.path.abspath(os.path.join(config.ASSETS_DIR, 'Fonts', funds_font_name))
+            if os.path.exists(funds_font_path):
+                print(f"Attempting to load funds font from path: {funds_font_path}")
+                self.funds_font = pygame.font.Font(funds_font_path, funds_font_size)
+                print(f"Successfully created funds font object: {self.funds_font}")
+            else:
+                print(f"Funds font file not found at: {funds_font_path}. Using default UI font for funds.")
+                self.funds_font = self.ui_font # Fallback to the default UI font
+
             # Font specifically for cutscene text (can be different)
             self.cutscene_font = pygame.font.Font(None, 28) # Example size
             print("UI and Cutscene Fonts initialized.")
         except pygame.error as e:
+            print(f"Error initializing funds font '{funds_font_name}': {e}. Using default UI font.")
+            self.funds_font = pygame.font.Font(None, 30) # Ensure fallback on error
+        except Exception as e: # Catch other potential font loading errors
             print(f"Error initializing fonts: {e}")
             self.ui_font = None
             self.cutscene_font = None
@@ -92,21 +109,27 @@ class Game:
         piermaster_start_x = 500
         piermaster_start_y = 400
         self.piermaster = sprites.Piermaster(piermaster_start_x, piermaster_start_y)
-        mayor_start_x = 550
-        mayor_start_y = 450
+        mayor_start_x = 650 # Increased from 550 to shift right
+        mayor_start_y = 450 # Kept the same Y position
         self.mayor = sprites.Mayor(mayor_start_x, mayor_start_y)
+
+        # Store houseowner data: (x, y, image_config_key)
+        houseowner_data = [
+            (100, 105, config.HOUSEOWNER_DEFAULT_IMAGE),
+            (350, 105, config.HOUSEOWNER_ONE_IMAGE),
+            (650, 105, config.HOUSEOWNER_TWO_IMAGE),
+            (920, 105, config.HOUSEOWNER_THREE_IMAGE),
+        ]
+        self.houseowners: List[sprites.Houseowner | None] = [] # Use a list
         try:
-            # Ensure config has the correct image constants defined
-            self.houseowner0 = sprites.Houseowner(100, 105, config.HOUSEOWNER_DEFAULT_IMAGE)
-            self.houseowner1 = sprites.Houseowner(350, 105, config.HOUSEOWNER_ONE_IMAGE)
-            self.houseowner2 = sprites.Houseowner(650, 105, config.HOUSEOWNER_TWO_IMAGE)
-            self.houseowner3 = sprites.Houseowner(920, 105, config.HOUSEOWNER_THREE_IMAGE)
+            for x, y, img_path in houseowner_data:
+                self.houseowners.append(sprites.Houseowner(x, y, img_path))
         except AttributeError as e:
              print(f"Error initializing Houseowners (check image constants in config.py): {e}")
-             self.houseowner0 = self.houseowner1 = self.houseowner2 = self.houseowner3 = None
+             self.houseowners = [] # Clear list on error
         except Exception as e: # Catch other potential errors during init
              print(f"Unexpected error initializing Houseowners: {e}")
-             self.houseowner0 = self.houseowner1 = self.houseowner2 = self.houseowner3 = None
+             self.houseowners = [] # Clear list on error
 
 
         # --- Dialogue Box Initialization (for testing/other uses) ---
@@ -394,22 +417,31 @@ class Game:
             # --- Render Text (remains the same) ---
             text = self.active_cutscene.sentences[slide_index]
             self.cutscene_text_surface = None # Reset previous text
+            self.cutscene_text_bg_rect = None # Reset background rect
             if text:
                 text_margin = 50
                 text_box_height = 150
-                text_rect = pygame.Rect(
+                # 1. Define the visual background box rectangle
+                self.cutscene_text_bg_rect = pygame.Rect(
                     text_margin,
                     self.screen.get_height() - text_box_height - text_margin,
                     self.screen.get_width() - (text_margin * 2),
                     text_box_height
                 )
+
+                # 2. Define the area *inside* the box for text rendering
+                text_render_area_width = self.cutscene_text_bg_rect.width - (self.cutscene_text_padding * 2)
+                text_render_area_height = self.cutscene_text_bg_rect.height - (self.cutscene_text_padding * 2)
+                text_render_rect = pygame.Rect(0, 0, text_render_area_width, text_render_area_height)
+
                 try:
+                    # 3. Render *only* the text with a transparent background
                     self.cutscene_text_surface = render_textrect(
                         text,
-                        self.cutscene_font,
-                        text_rect,
+                        self.cutscene_font, # Font object
+                        text_render_rect,   # The rectangle for the text area
                         config.WHITE,
-                        config.DARK_GRAY, # Background for the text box itself
+                        (0, 0, 0, 0), # Transparent background for the text surface
                         justification=0
                     )
                 except TextRectException as e:
@@ -472,6 +504,7 @@ class Game:
         self.current_cutscene_slide = 0
         self.cutscene_image_surface = None
         self.cutscene_text_surface = None
+        self.cutscene_text_bg_rect = None # Clear the background rect too
         # Optional: Add a small delay before player can move again?
         # pygame.time.wait(200) # e.g., 200ms pause
 
@@ -551,10 +584,20 @@ class Game:
                     # self.screen.blit(fps_surf, fps_rect)
 
                     # Draw Global Accumulator Value in the top-left
-                    acc_text = f"Pier Restoration funds: £{accumulator}" # Changed label, still accesses global accumulator
-                    acc_surf = self.ui_font.render(acc_text, True, config.WHITE)
-                    acc_rect = acc_surf.get_rect(topleft=(10, 10)) # Position independently
-                    self.screen.blit(acc_surf, acc_rect)
+                    # Only draw funds on specific maps
+                    if self.current_map_key in ['palace', 'streets']:
+                        if hasattr(self, 'funds_font') and self.funds_font: # Check if funds_font loaded
+                            # Define the text and position
+                            acc_text = f"Pier Restoration funds: £{accumulator}" # Changed label, still accesses global accumulator
+                            text_pos = (10, 10)
+                            outline_offset = 2 # How many pixels to offset the black background/outline
+
+                            # 1. Render and blit the black background/outline text slightly offset
+                            acc_surf_black = self.funds_font.render(acc_text, True, config.BLACK)
+                            self.screen.blit(acc_surf_black, (text_pos[0] + outline_offset, text_pos[1] + outline_offset))
+                            # 2. Render and blit the main white text on top
+                            acc_surf_white = self.funds_font.render(acc_text, True, config.WHITE) # Use funds_font
+                            self.screen.blit(acc_surf_white, text_pos)
 
                 # Draw test dialogue box if active
                 if hasattr(self, 'test_dialogue_box'):
@@ -574,19 +617,14 @@ class Game:
                 # Fallback if image surface somehow wasn't created
                 self.screen.fill(config.BLACK)
 
-            # 2. Draw Text Box on top of the image
-            if self.cutscene_text_surface:
-                 # Calculate position for the text box (same as before)
-                text_margin = 50
-                text_box_height = 150
-                text_rect = pygame.Rect(
-                    text_margin,
-                    self.screen.get_height() - text_box_height - text_margin,
-                    self.screen.get_width() - (text_margin * 2),
-                    text_box_height
-                )
-                # Blit the rendered text surface onto the screen
-                self.screen.blit(self.cutscene_text_surface, text_rect.topleft)
+            # 2. Draw the dark gray background box if its rect exists
+            if self.cutscene_text_bg_rect:
+                pygame.draw.rect(self.screen, config.DARK_GRAY, self.cutscene_text_bg_rect)
+
+                # 3. Draw the text surface (text only) on top of the background, offset by padding
+                if self.cutscene_text_surface:
+                    text_blit_pos = (self.cutscene_text_bg_rect.x + self.cutscene_text_padding, self.cutscene_text_bg_rect.y + self.cutscene_text_padding)
+                    self.screen.blit(self.cutscene_text_surface, text_blit_pos)
 
             # 3. Draw "Press Enter" prompt on top
             if self.ui_font:

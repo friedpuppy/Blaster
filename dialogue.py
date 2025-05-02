@@ -109,7 +109,7 @@ def render_textrect(string, font, rect, text_color, background_color, justificat
 
 class DialogueBox(pygame.sprite.Sprite):
     # --- DialogueBox class remains the same ---
-    def __init__(self, game, text, x, y, width=600, height=200, font_size=30, font_name='monofonto rg.otf'):
+    def __init__(self, game, text, x, y, width=600, height=200, font_size=30, font_name='White On Black.ttf'):
         super().__init__()
         self.game = game
         self._text = text # Use property for text
@@ -428,11 +428,20 @@ collision_cutscenes: dict[str, Cutscene] = {
       # --- STORY 3 STORY THREE STORY3 ---
     "houseowner3_cutscene": Cutscene(
         image_paths=[
-            f'{IMAGES_DIR}/story3.jpg' # Updated path
+            f'{IMAGES_DIR}/story3.jpg', # Slide 1
+            f'{IMAGES_DIR}/story3.jpg', # Slide 2
+            f'{IMAGES_DIR}/story3.jpg', # Slide 3
+            f'{IMAGES_DIR}/story3.jpg', # Slide 4
         ],
         sentences=[
-            # Updated sentence to match image
-            "A depiction of the terrible storm of 1824. Press Enter to close."
+            # Slide 1
+            "Ever read Porden’s diary from 1802? Crossed to Dieppe on the Eliza—cramped boxes stacked like coffins, he called the cabins. No portholes. Want light? Open your door to the dining room’s chaos. Privacy meant sitting in the dark or burning your own candle. Bedding? Haul it yourself—part of your 400-pound allowance. At least officers shared their table, though the return trip made you pack your own food, even after they gouged your coin.",
+            # Slide 2
+            "Porden sketched the layout—‘cabinetts stretched too large,’ he scribbled. Took 18 hours. Just boarding was a farce: Eleanor, his daughter, green-faced, hauled into a cot while waves tossed their rowboat. Cabins had curtains for decency, but nothing stifled the stench. Boys swapped sick basins like ghosts.",
+            # Slide 3
+            "Miss Appleton, though—poor soul. Puked from Brighton till Dieppe, left forgotten on the ship. Porden called her ‘courageous’—a tall, sharp-tongued bluestocking, fluent in French, traveling alone. Carried ashore on a sailor’s back, insensible.",
+            # Slide 4
+            "Customs cleared, they limped to the English Hotel. Charged London prices for slop, Porden griped. Imagine it—eighteen hours of retching, then overpaying for gristle. Chain Pier’s cushy ferries? Saints’ work compared to this.\" Her smirk was sharp as she jabbed the diary. \"Romantic age, my arse.\""
         ],
         music_path=f'{ASSETS_DIR}/Music/story3_theme.ogg' # Example music path for story 3
     ),

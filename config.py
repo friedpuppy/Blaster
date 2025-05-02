@@ -26,7 +26,6 @@ MAYOR_IMAGE: str = f'{IMAGES_DIR}/mayor.png'
 HOUSEOWNER_IMAGE: str = f'{IMAGES_DIR}/houseowner0.png'
 
 HOUSEOWNER_DEFAULT_IMAGE: str = f'{IMAGES_DIR}/houseowner0.png' # A general one if needed
-HOUSEOWNER_DEFAULT_IMAGE: str = f'{IMAGES_DIR}/houseowner0.png' # A general one if needed
 HOUSEOWNER_ONE_IMAGE: str = f'{IMAGES_DIR}/houseowner1.png' # Replace with actual filename
 HOUSEOWNER_TWO_IMAGE: str = f'{IMAGES_DIR}/houseowner2.png' # Replace with actual filename
 HOUSEOWNER_THREE_IMAGE: str = f'{IMAGES_DIR}/houseowner3.png' # Replace with actual filename
