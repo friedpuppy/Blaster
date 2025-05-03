@@ -33,7 +33,8 @@ HOUSEOWNER_THREE_IMAGE: str = f'{IMAGES_DIR}/houseowner3.png' # Replace with act
 MAP_PATHS: dict[str, str] = {
     'pier': f"{MAPS_DIR}/pier_map.tmx",
     'palace': f"{MAPS_DIR}/palace_map.tmx",
-    'streets': f"{MAPS_DIR}/streets_map.tmx"
+    'streets': f"{MAPS_DIR}/streets_map.tmx",
+    'pier_repaired': f"{MAPS_DIR}/pier_map_repaired.tmx" # Add the repaired map
 }
 
 
@@ -41,7 +42,8 @@ MAP_PATHS: dict[str, str] = {
 MAP_MUSIC_PATHS: dict[str, str | None] = {
     'pier': f'{MUSIC_DIR}/ReachingOut.mp3',
     'palace': f'{MUSIC_DIR}/Autumn Day.mp3', # Make sure 'Autumn Day.mp3' exists
-    'streets': f'{MUSIC_DIR}/When The Wind Blows.mp3' # Make sure 'When The Wind Blows.mp3' exists
+    'streets': f'{MUSIC_DIR}/When The Wind Blows.mp3', # Make sure 'When The Wind Blows.mp3' exists
+    'pier_repaired': f'{MUSIC_DIR}/ReachingOut.mp3' # Use same music, or change/set to None
     # Add other maps here if they have music, or None if they don't
 }
 MAP_MUSIC_FADE_MS: int = 1000 # Fade duration for map music (in/out)

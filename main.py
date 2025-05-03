@@ -72,10 +72,7 @@ class Game:
         self.triggered_cutscenes = set() # Keep track of which cutscenes have been played (per map load)
         self.cutscene_music_fadeout_time = 500 # Milliseconds for music fade-out
 
-        # --- Pier Repair State ---
-        self.pier_damaged_layer_name: str = "pier" # Ensure this matches your Tiled layer name for the default damaged state
-        self.pier_repaired_layer_name: str = "pier-repaired" # Ensure this matches your Tiled layer name
-        self.pier_is_repaired: bool = False # Flag to track if the visual repair has been applied
+        # --- Pier Repair State Variables Removed ---
         # --- Font Initialization ---
         try:
             # Font for general UI (like FPS counter)
@@ -176,23 +173,7 @@ class Game:
             # Reset last tile properties
             self.last_event_tile_properties = None
 
-            # --- Pier Map Specific Layer Setup ---
-            if map_key == 'pier':
-                self.pier_is_repaired = False # Reset repair status when pier map loads
-                try:
-                    damaged_layer = self.tmx_data.get_layer_by_name(self.pier_damaged_layer_name)
-                    repaired_layer = self.tmx_data.get_layer_by_name(self.pier_repaired_layer_name)
-                    # Set initial visibility: damaged=True, repaired=False
-                    damaged_layer.visible = True
-                    repaired_layer.visible = False
-                    print(f"  Set initial visibility: '{self.pier_damaged_layer_name}' visible, '{self.pier_repaired_layer_name}' hidden.")
-                except ValueError:
-                    print(f"  Warning: Could not find pier layers ('{self.pier_damaged_layer_name}' or '{self.pier_repaired_layer_name}') in TMX.")
-                except AttributeError:
-                     print(f"  Warning: Error accessing layer visibility (TMX data might be invalid).")
-
-            # --- Recreate Renderer AFTER setting initial visibility ---
-            map_data = pyscroll.TiledMapData(self.tmx_data) # Recreate map_data with potentially updated visibility
+            # --- Recreate Renderer (No special pier logic needed here anymore) ---
             self.map_layer = pyscroll.BufferedRenderer(map_data, self.screen.get_size(), clamp_camera=True, alpha=True)
             self.map_layer.zoom = config.ZOOM_LEVEL
 
@@ -200,7 +181,7 @@ class Game:
             self.group.add(self.player)
 
             # --- Add NPCs Based on Map ---
-            if map_key == 'pier' and hasattr(self, 'piermaster'):
+            if map_key in ['pier', 'pier_repaired'] and hasattr(self, 'piermaster'): # Add piermaster to both pier maps
                 self.group.add(self.piermaster)
             elif map_key == 'palace' and hasattr(self, 'mayor'):
                 self.group.add(self.mayor)
@@ -350,6 +331,9 @@ class Game:
         elif self.current_map_key == 'streets' and player_rect.right >= config.SCREEN_WIDTH - buffer:
             new_map_key = 'palace'
             new_player_pos = ('left', buffer)
+        elif self.current_map_key == 'pier_repaired' and player_rect.left <= 0 + buffer: # Transition FROM repaired pier
+            new_map_key = 'palace'
+            new_player_pos = ('right', config.SCREEN_WIDTH - buffer)
         # Add other transitions (e.g., top/bottom) if needed
 
         # --- Execute Transition ---
@@ -364,36 +348,8 @@ class Game:
             self.player.hitbox.center = self.player.rect.center
             print(f"Player repositioned at {side}={coordinate} in map '{new_map_key}'")
 
-    def check_pier_repair_status(self) -> None:
-        """Checks if the pier should be visually repaired based on the accumulator."""
-        global accumulator # Access the global accumulator
+    # --- check_pier_repair_status method is removed ---
 
-        # Only proceed if on the pier map, it's not already repaired, and accumulator is high enough
-        if self.current_map_key == 'pier' and not self.pier_is_repaired and accumulator >= 300:
-            print(f"Accumulator reached {accumulator}. Attempting to repair pier visually.")
-            if not self.tmx_data or not self.map_layer or not self.group:
-                print("  Error: Cannot repair pier - TMX data, map layer, or group not loaded.")
-                return
-
-            try:
-                damaged_layer = self.tmx_data.get_layer_by_name(self.pier_damaged_layer_name)
-                repaired_layer = self.tmx_data.get_layer_by_name(self.pier_repaired_layer_name)
-
-                # Make the repaired layer visible (don't hide the damaged one)
-                # damaged_layer.visible = False # <-- Removed this line
-                repaired_layer.visible = True
-                self.pier_is_repaired = True # Set flag
-                print(f"  Updated layer visibility: '{self.pier_repaired_layer_name}' now visible.")
-
-                # *** Crucial: Recreate the map renderer to apply visibility changes ***
-                map_data = pyscroll.TiledMapData(self.tmx_data) # Get data with new visibility
-                self.map_layer = pyscroll.BufferedRenderer(map_data, self.screen.get_size(), clamp_camera=True, alpha=True)
-                self.map_layer.zoom = config.ZOOM_LEVEL
-                self.group.map_layer = self.map_layer # Update the group's renderer reference
-                print("  Recreated map renderer to apply changes.")
-
-            except (ValueError, AttributeError) as e:
-                print(f"  Error applying pier repair visibility change: {e}")
     # --- Cutscene Methods ---
 
     def start_cutscene(self, cutscene_key: str) -> None:
@@ -596,8 +552,7 @@ class Game:
                         global accumulator
                         accumulator = 300
                         print(f"DEBUG: 'Q' pressed. Accumulator set to {accumulator}.")
-                        # Optionally, immediately check pier status if on pier map
-                        self.check_pier_repair_status()
+                        # No immediate check needed, update loop will handle the transition
                     # Add other gameplay keybinds here (e.g., interaction key)
 
             elif self.game_state == 'cutscene':
@@ -622,8 +577,20 @@ class Game:
                 self.check_tile_events() # <--- This now handles cutscene triggers
                 # Check for map transitions
                 self.handle_map_transitions()
-                # Check if the pier needs visual repair
-                self.check_pier_repair_status()
+
+                # --- Check for Pier Repair Map Transition ---
+                global accumulator
+                if self.current_map_key == 'pier' and accumulator >= 300:
+                    player_pos = self.player.rect.topleft # Store current position
+                    print(f"Accumulator reached {accumulator} on pier map. Transitioning to repaired pier.")
+                    self.load_map('pier_repaired')
+                    # Restore player position after map load
+                    if self.player: # Check if player exists after load
+                        self.player.rect.topleft = player_pos
+                        self.player.hitbox.center = self.player.rect.center
+                        print(f"  Player position maintained at {player_pos} on repaired pier.")
+                        if self.group: # Center camera on the restored position
+                            self.group.center(self.player.rect.center)
 
                 # --- Collision check for triggers is removed ---
 
