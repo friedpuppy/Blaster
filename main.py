@@ -1,6 +1,6 @@
 # \\synology\sharedDrive\CALLUM\EDUCATION\2022-2025 Brighton University\3-YEAR THREE\CI601 The Computing Project\GAME DEVELOPMENT\Master\sharedDrive\CALLUM\EDUCATION\2022-2025 Brighton University\3-YEAR THREE\CI601 The Computing Project\GAME DEVELOPMENT\Master\main.py
 # Author: Callum Donnelly
-# Date: 2025-04-30 (or update to current date)
+# Date: 2025-05-03 (or update to current date)
 # Description: Main entry point for the game. Initializes Pygame,
 #              manages the game loop, handles map loading and transitions,
 #              and coordinates updates and drawing of game elements.
