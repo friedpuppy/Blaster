@@ -1,5 +1,5 @@
 {
-    "activeFile": "mayorsHouse.tmx",
+    "activeFile": "pier_map_repaired.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -47,7 +47,7 @@
         },
         "clouds.tsx": {
             "dynamicWrapping": false,
-            "scaleInDock": 1
+            "scaleInDock": 0.25
         },
         "grass.tsx": {
             "dynamicWrapping": false,
@@ -114,10 +114,10 @@
         },
         "pier_map_repaired.tmx": {
             "scale": 1,
-            "selectedLayer": 5,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 788,
-                "y": 541
+                "x": 407,
+                "y": 406
             }
         },
         "sea.tmx": {
@@ -171,23 +171,24 @@
         "mayorsHouse.tmx",
         "palace_map.tmx",
         "streets_map.tmx",
-        "pier_map - Copy.tmx"
+        "pier_map_repaired.tmx",
+        "pier_map.tmx"
     ],
     "project": "pier_to_the_past.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "pier_map - Copy.tmx",
         "Buttons - Full Pack.tsx",
-        "streets_map.tmx",
-        "palace_map.tmx",
         "mayorsHouse.tmx",
+        "palace_map.tmx",
+        "streets_map.tmx",
         "pier_map.tmx",
+        "pier_map_repaired.tmx",
+        "pier_map - Copy.tmx",
         "streets_ma3p.tmx",
         "streets_map copy.tmx",
         "sea.tmx",
         "grass.tsx",
-        "chains1.tsx",
-        "build_atlas.tsx"
+        "chains1.tsx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx",
