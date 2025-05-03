@@ -46,6 +46,7 @@
             "scaleInDock": 1
         },
         "clouds.tsx": {
+            "dynamicWrapping": false,
             "scaleInDock": 1
         },
         "grass.tsx": {
