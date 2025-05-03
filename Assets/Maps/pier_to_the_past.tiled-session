@@ -1,5 +1,5 @@
 {
-    "activeFile": "Buttons - Full Pack.tsx",
+    "activeFile": "mayorsHouse.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -65,8 +65,8 @@
             "scale": 0.9025,
             "selectedLayer": 1,
             "viewCenter": {
-                "x": 479.77839335180056,
-                "y": 319.66759002770084
+                "x": 480.88642659279776,
+                "y": 319.1135734072023
             }
         },
         "obj_misk_atlas.tsx": {
@@ -83,8 +83,8 @@
             "scale": 0.75,
             "selectedLayer": 3,
             "viewCenter": {
-                "x": 623.3333333333333,
-                "y": 486.6666666666666
+                "x": 640,
+                "y": 480
             }
         },
         "pier2.tsx": {
@@ -99,16 +99,24 @@
             "scale": 0.9074479166666666,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 479.9173506284797,
+                "x": 480.46834643861564,
                 "y": 319.5775698788957
             }
         },
         "pier_map.tmx": {
-            "scale": 0.75,
+            "scale": 1,
             "selectedLayer": 4,
             "viewCenter": {
-                "x": 661.3333333333333,
-                "y": 594
+                "x": 788,
+                "y": 541
+            }
+        },
+        "pier_map_repaired.tmx": {
+            "scale": 1,
+            "selectedLayer": 5,
+            "viewCenter": {
+                "x": 788,
+                "y": 541
             }
         },
         "sea.tmx": {
@@ -145,7 +153,7 @@
             "selectedLayer": 0,
             "viewCenter": {
                 "x": 640,
-                "y": 479
+                "y": 478
             }
         },
         "trees-and-bushes.tsx": {
@@ -159,23 +167,23 @@
     "map.lastUsedFormat": "tmx",
     "openFiles": [
         "Buttons - Full Pack.tsx",
-        "pier_map.tmx",
         "mayorsHouse.tmx",
         "palace_map.tmx",
-        "streets_map.tmx"
+        "streets_map.tmx",
+        "pier_map - Copy.tmx"
     ],
     "project": "pier_to_the_past.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "pier_map - Copy.tmx",
+        "Buttons - Full Pack.tsx",
         "streets_map.tmx",
         "palace_map.tmx",
         "mayorsHouse.tmx",
         "pier_map.tmx",
-        "Buttons - Full Pack.tsx",
         "streets_ma3p.tmx",
         "streets_map copy.tmx",
         "sea.tmx",
-        "pier_map - Copy.tmx",
         "grass.tsx",
         "chains1.tsx",
         "build_atlas.tsx"
