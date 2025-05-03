@@ -181,7 +181,7 @@ class Game:
             self.group.add(self.player)
 
             # --- Add NPCs Based on Map ---
-            if map_key in ['pier', 'pier_repaired'] and hasattr(self, 'piermaster'): # Add piermaster to both pier maps
+            if map_key == 'pier' and hasattr(self, 'piermaster'): # Original pier only gets piermaster
                 self.group.add(self.piermaster)
             elif map_key == 'palace' and hasattr(self, 'mayor'):
                 self.group.add(self.mayor)
@@ -189,6 +189,20 @@ class Game:
                 # Add houseowners if they exist
                 for houseowner in self.houseowners: # Iterate through the list
                     if houseowner: self.group.add(houseowner) # Add each one if it exists
+            elif map_key == 'pier_repaired':
+                # Add NPCs to the repaired pier
+                print("Adding NPCs to repaired pier map...")
+                # Example coordinates - adjust these as needed!
+                repaired_pier_npc_y = 350 # Place them roughly in the middle vertically
+                if hasattr(self, 'piermaster'):
+                    self.piermaster.rect.center = (400, repaired_pier_npc_y) # Reposition existing piermaster
+                    self.group.add(self.piermaster)
+                if hasattr(self, 'mayor'):
+                    self.mayor.rect.center = (500, repaired_pier_npc_y) # Reposition existing mayor
+                    self.group.add(self.mayor)
+                if self.houseowners and len(self.houseowners) > 0 and self.houseowners[0]: # Add the first houseowner
+                    self.houseowners[0].rect.center = (600, repaired_pier_npc_y) # Reposition existing houseowner
+                    self.group.add(self.houseowners[0])
 
                 # --- Object Trigger Loading is Removed ---
             # Update the group's map layer reference
