@@ -592,6 +592,12 @@ class Game:
                     if event.key == pygame.K_t: # Toggle test dialogue
                         print("T key pressed - Toggling test dialogue box.")
                         self.test_dialogue_box.toggle()
+                    elif event.key == pygame.K_q: # DEBUG: Set accumulator to 300
+                        global accumulator
+                        accumulator = 300
+                        print(f"DEBUG: 'Q' pressed. Accumulator set to {accumulator}.")
+                        # Optionally, immediately check pier status if on pier map
+                        self.check_pier_repair_status()
                     # Add other gameplay keybinds here (e.g., interaction key)
 
             elif self.game_state == 'cutscene':
