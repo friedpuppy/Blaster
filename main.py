@@ -69,6 +69,7 @@ class Game:
         self.cutscene_text_bg_rect: Optional[pygame.Rect] = None # Rect for the text background box
         self.cutscene_text_padding: int = 15 # Pixels of padding inside the text box
         # Removed the cutscene_triggers group
+        self.show_player_coords: bool = False # Flag to control coordinate display
         self.triggered_cutscenes = set() # Keep track of which cutscenes have been played (per map load)
         self.cutscene_music_fadeout_time = 500 # Milliseconds for music fade-out
 
@@ -193,16 +194,26 @@ class Game:
                 # Add NPCs to the repaired pier
                 print("Adding NPCs to repaired pier map...")
                 # Example coordinates - adjust these as needed!
-                repaired_pier_npc_y = 350 # Place them roughly in the middle vertically
+                repaired_pier_npc_y = 600 # Y-coordinate for NPCs on repaired pier
                 if hasattr(self, 'piermaster'):
-                    self.piermaster.rect.center = (400, repaired_pier_npc_y) # Reposition existing piermaster
+                    self.piermaster.rect.center = (350, repaired_pier_npc_y) # Shifted right
                     self.group.add(self.piermaster)
                 if hasattr(self, 'mayor'):
-                    self.mayor.rect.center = (500, repaired_pier_npc_y) # Reposition existing mayor
+                    self.mayor.rect.center = (450, repaired_pier_npc_y) # Shifted right
                     self.group.add(self.mayor)
                 if self.houseowners and len(self.houseowners) > 0 and self.houseowners[0]: # Add the first houseowner
-                    self.houseowners[0].rect.center = (600, repaired_pier_npc_y) # Reposition existing houseowner
+                    self.houseowners[0].rect.center = (650, repaired_pier_npc_y) # Shifted right
                     self.group.add(self.houseowners[0])
+                # --- Add more Houseowners to the repaired pier ---
+                # Define positions and images for the additional houseowners
+                additional_houseowners_data = [
+                    (750, repaired_pier_npc_y, config.HOUSEOWNER_ONE_IMAGE),  # Shifted right
+                    (850, repaired_pier_npc_y, config.HOUSEOWNER_TWO_IMAGE),  # Shifted right
+                    (950, repaired_pier_npc_y, config.HOUSEOWNER_THREE_IMAGE), # Shifted right
+                ]
+                for x, y, img_path in additional_houseowners_data:
+                    new_houseowner = sprites.Houseowner(x, y, img_path)
+                    self.group.add(new_houseowner) # Add the new NPC to the group
 
                 # --- Object Trigger Loading is Removed ---
             # Update the group's map layer reference
@@ -566,6 +577,9 @@ class Game:
                         global accumulator
                         accumulator = 300
                         print(f"DEBUG: 'Q' pressed. Accumulator set to {accumulator}.")
+                    elif event.key == pygame.K_c: # Toggle coordinate display
+                        self.show_player_coords = not self.show_player_coords
+                        print(f"Coordinate display toggled: {'ON' if self.show_player_coords else 'OFF'}")
                         # No immediate check needed, update loop will handle the transition
                     # Add other gameplay keybinds here (e.g., interaction key)
 
@@ -622,27 +636,42 @@ class Game:
                 # --- Draw UI Elements ---
                 # Example FPS counter (uncomment if needed)
                 if self.ui_font:
-                    # --- FPS Counter Removed ---
-                    # fps_text = f"FPS: {self.clock.get_fps():.1f}"
-                    # fps_surf = self.ui_font.render(fps_text, True, config.WHITE)
-                    # fps_rect = fps_surf.get_rect(topleft=(10, 10))
-                    # self.screen.blit(fps_surf, fps_rect)
+                    ui_y_offset = 10 # Starting Y position for top-left UI elements
+                    ui_x_pos = 10    # Starting X position
+                    outline_offset = 2 # How many pixels to offset the black background/outline
 
-                    # Draw Global Accumulator Value in the top-left
+                    # --- Draw Funds Counter (if applicable) ---
                     # Only draw funds on specific maps
                     if self.current_map_key in ['palace', 'streets']:
                         if hasattr(self, 'funds_font') and self.funds_font: # Check if funds_font loaded
                             # Define the text and position
                             acc_text = f"Pier Restoration funds: £{accumulator}" # Changed label, still accesses global accumulator
-                            text_pos = (10, 10)
-                            outline_offset = 2 # How many pixels to offset the black background/outline
 
                             # 1. Render and blit the black background/outline text slightly offset
                             acc_surf_black = self.funds_font.render(acc_text, True, config.BLACK)
-                            self.screen.blit(acc_surf_black, (text_pos[0] + outline_offset, text_pos[1] + outline_offset))
+                            self.screen.blit(acc_surf_black, (ui_x_pos + outline_offset, ui_y_offset + outline_offset))
                             # 2. Render and blit the main white text on top
                             acc_surf_white = self.funds_font.render(acc_text, True, config.WHITE) # Use funds_font
-                            self.screen.blit(acc_surf_white, text_pos)
+                            self.screen.blit(acc_surf_white, (ui_x_pos, ui_y_offset))
+
+                            # Update the Y offset for the next UI element
+                            ui_y_offset += acc_surf_white.get_height() + 5 # Add 5 pixels padding
+
+                    # --- Draw Player Coordinates (if toggled) ---
+                    if self.show_player_coords and self.player:
+                        px, py = self.player.rect.topleft # Get player's top-left coords
+                        coords_text = f"X: {px}, Y: {py}"
+
+                        # Use the same font and outline technique as the funds counter for consistency
+                        # Render using ui_font (or funds_font if you prefer)
+                        coords_surf_black = self.ui_font.render(coords_text, True, config.BLACK)
+                        self.screen.blit(coords_surf_black, (ui_x_pos + outline_offset, ui_y_offset + outline_offset))
+
+                        coords_surf_white = self.ui_font.render(coords_text, True, config.WHITE)
+                        self.screen.blit(coords_surf_white, (ui_x_pos, ui_y_offset))
+
+                        # Optional: Update ui_y_offset again if more UI elements are added below
+                        # ui_y_offset += coords_surf_white.get_height() + 5
 
                 # Draw test dialogue box if active
                 if hasattr(self, 'test_dialogue_box'):

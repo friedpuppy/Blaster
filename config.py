@@ -43,7 +43,7 @@ MAP_MUSIC_PATHS: dict[str, str | None] = {
     'pier': f'{MUSIC_DIR}/ReachingOut.mp3',
     'palace': f'{MUSIC_DIR}/Autumn Day.mp3', # Make sure 'Autumn Day.mp3' exists
     'streets': f'{MUSIC_DIR}/When The Wind Blows.mp3', # Make sure 'When The Wind Blows.mp3' exists
-    'pier_repaired': f'{MUSIC_DIR}/ReachingOut.mp3' # Use same music, or change/set to None
+    'pier_repaired': f'{MUSIC_DIR}/Bright Wish.mp3' # Use same music, or change/set to None
     # Add other maps here if they have music, or None if they don't
 }
 MAP_MUSIC_FADE_MS: int = 1000 # Fade duration for map music (in/out)
