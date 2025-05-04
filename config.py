@@ -30,6 +30,8 @@ HOUSEOWNER_ONE_IMAGE: str = f'{IMAGES_DIR}/houseowner1.png' # Replace with actua
 HOUSEOWNER_TWO_IMAGE: str = f'{IMAGES_DIR}/houseowner2.png' # Replace with actual filename
 HOUSEOWNER_THREE_IMAGE: str = f'{IMAGES_DIR}/houseowner3.png' # Replace with actual filename
 
+INTRO_BACKGROUND_IMAGE: str = f'{IMAGES_DIR}/intro_background.png' # Add your intro background image filename
+
 MAP_PATHS: dict[str, str] = {
     'pier': f"{MAPS_DIR}/pier_map.tmx",
     'palace': f"{MAPS_DIR}/palace_map.tmx",
@@ -57,3 +59,33 @@ PLAYER_DIAGONAL_SPEED_FACTOR: float = 0.7071 # 1 / sqrt(2)
 
 # Map Transition Settings
 MAP_TRANSITION_BUFFER: int = 30 # Pixels from edge to trigger transition
+
+# --- NPC Starting Positions per Map ---
+# Defines the center (x, y) coordinates for NPCs on specific maps.
+# Keys are map names (matching MAP_PATHS keys).
+# Values are dictionaries where keys are NPC identifiers (e.g., 'piermaster', 'mayor', 'houseowner_0')
+# and values are (x, y) tuples.
+NPC_POSITIONS: dict[str, dict[str, tuple[int, int]]] = {
+    'pier': {
+        'piermaster': (500, 400), # Original position
+    },
+    'palace': {
+        'mayor': (650, 450), # Original position
+    },
+    'streets': {
+        # Use 'houseowner_INDEX' as the key
+        'houseowner_0': (100, 105), # Original positions
+        'houseowner_1': (350, 105),
+        'houseowner_2': (650, 105),
+        'houseowner_3': (920, 105),
+    },
+    'pier_repaired': {
+        'piermaster': (350, 600), # New position for repaired pier
+        'mayor': (450, 600),      # New position for repaired pier
+        'houseowner_0': (650, 600), # Reposition existing houseowner 0
+        'houseowner_1': (750, 600), # Reposition existing houseowner 1
+        'houseowner_2': (850, 600), # Reposition existing houseowner 2
+        'houseowner_3': (950, 600), # Reposition existing houseowner 3
+    }
+    # Add other maps here if NPCs appear on them
+}

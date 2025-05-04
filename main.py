@@ -25,6 +25,7 @@ from dialogue import DialogueBox, dialogues, Cutscene, collision_cutscenes, rend
 # Import from our custom modules
 import config  # Game configuration variables
 import sprites # Game sprite classes (Player, NPCs, etc.)
+from ui import Button # Import the Button class
 
 # --- Global Variables ---
 accumulator: int = 0 # Example global variable
@@ -59,7 +60,7 @@ class Game:
         self.current_background_music_path: Optional[str] = None # Track currently playing BGM
 
         # --- Game State ---
-        self.game_state: str = 'playing' # 'playing', 'cutscene', 'paused', etc.
+        self.game_state: str = 'intro' # Start in the 'intro' state
 
         # --- Cutscene State Variables ---
         self.active_cutscene: Optional[Cutscene] = None
@@ -78,6 +79,7 @@ class Game:
         try:
             # Font for general UI (like FPS counter)
             self.ui_font = pygame.font.Font(None, 30)
+            self.title_font = pygame.font.Font(None, 60) # Font for the intro title
             # Font for the funds display (using your custom font)
             funds_font_name = 'White On Black.ttf'
             funds_font_size = 30 # Or adjust as needed
@@ -93,6 +95,7 @@ class Game:
             # Font specifically for cutscene text (can be different)
             self.cutscene_font = pygame.font.Font(None, 28) # Example size
             print("UI and Cutscene Fonts initialized.")
+
         except pygame.error as e:
             print(f"Error initializing funds font '{funds_font_name}': {e}. Using default UI font.")
             self.funds_font = pygame.font.Font(None, 30) # Ensure fallback on error
@@ -100,6 +103,7 @@ class Game:
             print(f"Error initializing fonts: {e}")
             self.ui_font = None
             self.cutscene_font = None
+            self.title_font = None
             self.running = False # Stop if fonts fail
 
         # --- Player Initialization ---
@@ -108,24 +112,25 @@ class Game:
         self.player = sprites.Player(player_start_x, player_start_y)
 
         # --- NPC Initialization ---
-        piermaster_start_x = 500
-        piermaster_start_y = 400
-        self.piermaster = sprites.Piermaster(piermaster_start_x, piermaster_start_y)
-        mayor_start_x = 650 # Increased from 550 to shift right
-        mayor_start_y = 450 # Kept the same Y position
-        self.mayor = sprites.Mayor(mayor_start_x, mayor_start_y)
+        # Initialize NPCs with placeholder positions (0, 0).
+        # Their actual positions will be set in load_map based on config.NPC_POSITIONS.
+        self.piermaster = sprites.Piermaster(0, 0)
+        self.mayor = sprites.Mayor(0, 0)
 
-        # Store houseowner data: (x, y, image_config_key)
+        # Store houseowner image paths (positions are now handled by NPC_POSITIONS)
         houseowner_data = [
-            (100, 105, config.HOUSEOWNER_DEFAULT_IMAGE),
-            (350, 105, config.HOUSEOWNER_ONE_IMAGE),
-            (650, 105, config.HOUSEOWNER_TWO_IMAGE),
-            (920, 105, config.HOUSEOWNER_THREE_IMAGE),
+            config.HOUSEOWNER_DEFAULT_IMAGE,
+            config.HOUSEOWNER_ONE_IMAGE,
+            config.HOUSEOWNER_TWO_IMAGE,
+            config.HOUSEOWNER_THREE_IMAGE,
         ]
         self.houseowners: List[sprites.Houseowner | None] = [] # Use a list
         try:
-            for x, y, img_path in houseowner_data:
-                self.houseowners.append(sprites.Houseowner(x, y, img_path))
+            # Create Houseowner instances with placeholder positions (0, 0)
+            for img_path in houseowner_data:
+                # Pass 0, 0 as initial coords; they will be updated in load_map
+                self.houseowners.append(sprites.Houseowner(0, 0, img_path))
+            print(f"Initialized {len(self.houseowners)} Houseowner instances.")
         except AttributeError as e:
              print(f"Error initializing Houseowners (check image constants in config.py): {e}")
              self.houseowners = [] # Clear list on error
@@ -140,10 +145,36 @@ class Game:
         test_message = "Test Dialogue Box (Press T)"
         self.test_dialogue_box = DialogueBox(self, test_message, dialogue_box_x, dialogue_box_y)
 
-        # --- Initial Map Load ---
-        self.load_map('pier') # Start on the pier map
+        # --- Intro Screen Assets ---
+        self.intro_background: Optional[pygame.Surface] = None
+        self.title_surf: Optional[pygame.Surface] = None
+        self.title_rect: Optional[pygame.Rect] = None
+        self.play_button: Optional[Button] = None
 
-        # --- Debug Map Load ---
+        try:
+            # Load intro background
+            self.intro_background = pygame.image.load(config.INTRO_BACKGROUND_IMAGE).convert()
+            # Scale if necessary to fit screen
+            self.intro_background = pygame.transform.smoothscale(self.intro_background, self.screen.get_size())
+
+            # Render title text
+            if self.title_font:
+                self.title_surf = self.title_font.render('A Pier to the Past', True, config.BLACK)
+                self.title_rect = self.title_surf.get_rect(centerx=config.SCREEN_WIDTH / 2, y=100) # Position title
+
+            # Create Play Button (ensure ui_font is loaded)
+            if self.ui_font:
+                button_width, button_height = 150, 60
+                button_x = (config.SCREEN_WIDTH - button_width) / 2
+                button_y = config.SCREEN_HEIGHT / 2 # Position button
+                self.play_button = Button(button_x, button_y, button_width, button_height, config.WHITE, config.DARK_GRAY, 'Play', self.ui_font)
+        except (pygame.error, FileNotFoundError) as e:
+            print(f"Error loading intro assets: {e}")
+            # Potentially set game state to error or quit
+            self.running = False
+
+        # --- Map Loading Deferred ---
+        # Map will be loaded when transitioning from 'intro' to 'playing' state
         #self.load_map('streets') # Start on the streets map
 
 
@@ -181,41 +212,33 @@ class Game:
             # --- Add Player ---
             self.group.add(self.player)
 
-            # --- Add NPCs Based on Map ---
-            if map_key == 'pier' and hasattr(self, 'piermaster'): # Original pier only gets piermaster
-                self.group.add(self.piermaster)
-            elif map_key == 'palace' and hasattr(self, 'mayor'):
-                self.group.add(self.mayor)
-            elif map_key == 'streets':
-                # Add houseowners if they exist
-                for houseowner in self.houseowners: # Iterate through the list
-                    if houseowner: self.group.add(houseowner) # Add each one if it exists
-            elif map_key == 'pier_repaired':
-                # Add NPCs to the repaired pier
-                print("Adding NPCs to repaired pier map...")
-                # Example coordinates - adjust these as needed!
-                repaired_pier_npc_y = 600 # Y-coordinate for NPCs on repaired pier
-                if hasattr(self, 'piermaster'):
-                    self.piermaster.rect.center = (350, repaired_pier_npc_y) # Shifted right
-                    self.group.add(self.piermaster)
-                if hasattr(self, 'mayor'):
-                    self.mayor.rect.center = (450, repaired_pier_npc_y) # Shifted right
-                    self.group.add(self.mayor)
-                if self.houseowners and len(self.houseowners) > 0 and self.houseowners[0]: # Add the first houseowner
-                    self.houseowners[0].rect.center = (650, repaired_pier_npc_y) # Shifted right
-                    self.group.add(self.houseowners[0])
-                # --- Add more Houseowners to the repaired pier ---
-                # Define positions and images for the additional houseowners
-                additional_houseowners_data = [
-                    (750, repaired_pier_npc_y, config.HOUSEOWNER_ONE_IMAGE),  # Shifted right
-                    (850, repaired_pier_npc_y, config.HOUSEOWNER_TWO_IMAGE),  # Shifted right
-                    (950, repaired_pier_npc_y, config.HOUSEOWNER_THREE_IMAGE), # Shifted right
-                ]
-                for x, y, img_path in additional_houseowners_data:
-                    new_houseowner = sprites.Houseowner(x, y, img_path)
-                    self.group.add(new_houseowner) # Add the new NPC to the group
+            # --- Add NPCs Based on Map using config.NPC_POSITIONS ---
+            npc_positions_for_map = config.NPC_POSITIONS.get(map_key, {}) # Get positions for current map, default to empty dict
+            print(f"NPC positions for map '{map_key}': {npc_positions_for_map}")
 
-                # --- Object Trigger Loading is Removed ---
+            # Add Piermaster if defined for this map
+            if 'piermaster' in npc_positions_for_map and hasattr(self, 'piermaster') and self.piermaster:
+                pos = npc_positions_for_map['piermaster']
+                self.piermaster.rect.center = pos
+                self.group.add(self.piermaster)
+                print(f"  Added Piermaster at {pos}")
+
+            # Add Mayor if defined for this map
+            if 'mayor' in npc_positions_for_map and hasattr(self, 'mayor') and self.mayor:
+                pos = npc_positions_for_map['mayor']
+                self.mayor.rect.center = pos
+                self.group.add(self.mayor)
+                print(f"  Added Mayor at {pos}")
+
+            # Add Houseowners if defined for this map
+            for i in range(len(self.houseowners)):
+                houseowner_key = f'houseowner_{i}'
+                if houseowner_key in npc_positions_for_map and self.houseowners[i]:
+                    pos = npc_positions_for_map[houseowner_key]
+                    self.houseowners[i].rect.center = pos
+                    self.group.add(self.houseowners[i])
+                    print(f"  Added Houseowner {i} at {pos}")
+
             # Update the group's map layer reference
             self.group.map_layer = self.map_layer
 
@@ -593,6 +616,20 @@ class Game:
                         print("Escape pressed - Ending cutscene early.")
                         self._end_cutscene()
 
+            elif self.game_state == 'intro':
+                # Handle intro screen input
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE: # Allow quitting from intro
+                        self.running = False
+
+                # Check button press
+                mouse_pos = pygame.mouse.get_pos()
+                mouse_pressed = pygame.mouse.get_pressed()
+                if self.play_button and self.play_button.is_pressed(mouse_pos, mouse_pressed):
+                    print("Play button pressed - Starting game.")
+                    self.game_state = 'playing'
+                    self.load_map('pier') # Load the initial map NOW
+
     def update(self, dt: float) -> None:
         """Updates the game state based on the current game_state."""
         if self.game_state == 'playing':
@@ -624,6 +661,10 @@ class Game:
 
         elif self.game_state == 'cutscene':
             # No game world updates happen during a cutscene
+            pass
+
+        elif self.game_state == 'intro':
+            # No game world updates needed for static intro screen
             pass
 
     def draw(self) -> None:
@@ -711,6 +752,19 @@ class Game:
                  # self.screen.blit(shadow_surf, prompt_rect.move(1,1)) # Offset shadow slightly
                  self.screen.blit(prompt_surf, prompt_rect)
 
+        elif self.game_state == 'intro':
+            # --- Draw Intro Screen ---
+            # Draw background
+            if self.intro_background:
+                self.screen.blit(self.intro_background, (0, 0))
+            else:
+                self.screen.fill(config.WHITE) # Fallback background
+            # Draw title
+            if self.title_surf and self.title_rect:
+                self.screen.blit(self.title_surf, self.title_rect)
+            # Draw button
+            if self.play_button:
+                self.play_button.draw(self.screen)
 
         # Update the display regardless of state
         pygame.display.flip()
