@@ -8,17 +8,23 @@ ZOOM_LEVEL: float = 1.0  # Use float for zoom
 DEFAULT_LAYER: int = 1
 TILE_SIZE: int = 32
 
+
+# Colours
+WHITE = (255,255,255)
+BLACK = (0,0,0)
+DARK_GRAY = (96,89,88)
+
 # File paths (Using relative paths is generally good practice)
 ASSETS_DIR = './Assets'
 IMAGES_DIR = f'{ASSETS_DIR}/Images'
 MAPS_DIR = f'{ASSETS_DIR}/Maps'
+MUSIC_DIR = f'{ASSETS_DIR}/Sounds'
 
 PIERMASTER_IMAGE: str = f'{IMAGES_DIR}/piermaster.png'
 PLAYER_IMAGE: str = f'{IMAGES_DIR}/gentleman.png'
 MAYOR_IMAGE: str = f'{IMAGES_DIR}/mayor.png'
 HOUSEOWNER_IMAGE: str = f'{IMAGES_DIR}/houseowner0.png'
 
-HOUSEOWNER_DEFAULT_IMAGE: str = f'{IMAGES_DIR}/houseowner0.png' # A general one if needed
 HOUSEOWNER_DEFAULT_IMAGE: str = f'{IMAGES_DIR}/houseowner0.png' # A general one if needed
 HOUSEOWNER_ONE_IMAGE: str = f'{IMAGES_DIR}/houseowner1.png' # Replace with actual filename
 HOUSEOWNER_TWO_IMAGE: str = f'{IMAGES_DIR}/houseowner2.png' # Replace with actual filename
@@ -27,8 +33,21 @@ HOUSEOWNER_THREE_IMAGE: str = f'{IMAGES_DIR}/houseowner3.png' # Replace with act
 MAP_PATHS: dict[str, str] = {
     'pier': f"{MAPS_DIR}/pier_map.tmx",
     'palace': f"{MAPS_DIR}/palace_map.tmx",
-    'streets': f"{MAPS_DIR}/streets_map.tmx"
+    'streets': f"{MAPS_DIR}/streets_map.tmx",
+    'pier_repaired': f"{MAPS_DIR}/pier_map_repaired.tmx" # Add the repaired map
 }
+
+
+# Map Specific Music Settings
+MAP_MUSIC_PATHS: dict[str, str | None] = {
+    'pier': f'{MUSIC_DIR}/ReachingOut.mp3',
+    'palace': f'{MUSIC_DIR}/Autumn Day.mp3', # Make sure 'Autumn Day.mp3' exists
+    'streets': f'{MUSIC_DIR}/When The Wind Blows.mp3', # Make sure 'When The Wind Blows.mp3' exists
+    'pier_repaired': f'{MUSIC_DIR}/ReachingOut.mp3' # Use same music, or change/set to None
+    # Add other maps here if they have music, or None if they don't
+}
+MAP_MUSIC_FADE_MS: int = 1000 # Fade duration for map music (in/out)
+
 
 # Player Settings
 PLAYER_SPEED: int = 5

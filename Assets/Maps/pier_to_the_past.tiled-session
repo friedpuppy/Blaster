@@ -1,5 +1,5 @@
 {
-    "activeFile": "streets_map.tmx",
+    "activeFile": "pier_map_repaired.tmx",
     "expandedProjectPaths": [
         "."
     ],
@@ -42,6 +42,13 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "cloud3.tsx": {
+            "scaleInDock": 1
+        },
+        "clouds.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 0.25
+        },
         "grass.tsx": {
             "dynamicWrapping": false,
             "scaleInDock": 1,
@@ -57,10 +64,10 @@
         },
         "mayorsHouse.tmx": {
             "scale": 0.9025,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
-                "x": 480.33240997229916,
-                "y": 407.7562326869807
+                "x": 480.88642659279776,
+                "y": 319.1135734072023
             }
         },
         "obj_misk_atlas.tsx": {
@@ -74,11 +81,11 @@
             "scaleInEditor": 2
         },
         "palace_map.tmx": {
-            "scale": 0.5,
-            "selectedLayer": 1,
+            "scale": 0.75,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 1264,
-                "y": 244
+                "x": 640,
+                "y": 480
             }
         },
         "pier2.tsx": {
@@ -89,17 +96,33 @@
             "dynamicWrapping": false,
             "scaleInDock": 1
         },
-        "pier_map.tmx": {
-            "scale": 0.75,
+        "pier_map - Copy.tmx": {
+            "scale": 0.9074479166666666,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 1086.6666666666665,
-                "y": 572
+                "x": 480.46834643861564,
+                "y": 319.5775698788957
+            }
+        },
+        "pier_map.tmx": {
+            "scale": 1,
+            "selectedLayer": 4,
+            "viewCenter": {
+                "x": 788,
+                "y": 541
+            }
+        },
+        "pier_map_repaired.tmx": {
+            "scale": 1,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 407,
+                "y": 406
             }
         },
         "sea.tmx": {
             "scale": 0.75,
-            "selectedLayer": 0,
+            "selectedLayer": 1,
             "viewCenter": {
                 "x": 454,
                 "y": 262.6666666666667
@@ -110,20 +133,28 @@
             "scaleInDock": 1,
             "scaleInEditor": 1
         },
+        "streets_ma3p.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 745,
+                "y": 606
+            }
+        },
         "streets_map copy.tmx": {
             "scale": 0.6805859375,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 639.8898008379729,
+                "x": 639.889800837973,
                 "y": 480.46834643861575
             }
         },
         "streets_map.tmx": {
-            "scale": 2,
-            "selectedLayer": 2,
+            "scale": 0.5,
+            "selectedLayer": 0,
             "viewCenter": {
-                "x": 179.25,
-                "y": 119
+                "x": 640,
+                "y": 478
             }
         },
         "trees-and-bushes.tsx": {
@@ -136,24 +167,28 @@
     "last.imagePath": "/synology/sharedDrive/CALLUM/EDUCATION/2022-2025 Brighton University/3-YEAR THREE/CI601 The Computing Project/GAME DEVELOPMENT/Master/Assets/Images",
     "map.lastUsedFormat": "tmx",
     "openFiles": [
+        "Buttons - Full Pack.tsx",
+        "mayorsHouse.tmx",
+        "palace_map.tmx",
         "streets_map.tmx",
-        "Buttons - Full Pack.tsx"
+        "pier_map_repaired.tmx",
+        "pier_map.tmx"
     ],
     "project": "pier_to_the_past.tiled-project",
     "property.type": "string",
     "recentFiles": [
         "Buttons - Full Pack.tsx",
-        "streets_map.tmx",
-        "streets_map copy.tmx",
-        "grass.tsx",
-        "chains1.tsx",
-        "build_atlas.tsx",
-        "pier_map.tmx",
-        "obj_misk_atlas.tsx",
+        "mayorsHouse.tmx",
         "palace_map.tmx",
-        "mayor.tsx",
+        "streets_map.tmx",
+        "pier_map.tmx",
+        "pier_map_repaired.tmx",
+        "pier_map - Copy.tmx",
+        "streets_ma3p.tmx",
+        "streets_map copy.tmx",
         "sea.tmx",
-        "mayorsHouse.tmx"
+        "grass.tsx",
+        "chains1.tsx"
     ],
     "tileset.lastUsedFilter": "Tiled tileset files (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx",
