@@ -13,6 +13,7 @@ TILE_SIZE: int = 32
 WHITE = (255,255,255)
 BLACK = (0,0,0)
 DARK_GRAY = (96,89,88)
+LIGHT_BLUE = (173, 216, 230) # For interaction prompt
 
 # File paths (Using relative paths is generally good practice)
 ASSETS_DIR = './Assets'
@@ -31,6 +32,7 @@ HOUSEOWNER_TWO_IMAGE: str = f'{IMAGES_DIR}/houseowner2.png' # Replace with actua
 HOUSEOWNER_THREE_IMAGE: str = f'{IMAGES_DIR}/houseowner3.png' # Replace with actual filename
 
 INTRO_BACKGROUND_IMAGE: str = f'{IMAGES_DIR}/intro_background.png' # Add your intro background image filename
+ENDING_BACKGROUND_IMAGE: str = f'{IMAGES_DIR}/ending_background.png' # Add your ending background image filename
 
 MAP_PATHS: dict[str, str] = {
     'pier': f"{MAPS_DIR}/pier_map.tmx",
@@ -56,6 +58,9 @@ PLAYER_SPEED: int = 5
 PLAYER_HITBOX_INFLATE_X: int = -8
 PLAYER_HITBOX_INFLATE_Y: int = -8
 PLAYER_DIAGONAL_SPEED_FACTOR: float = 0.7071 # 1 / sqrt(2)
+
+# Interaction Settings
+INTERACTION_DISTANCE: int = 50 # Max distance in pixels to interact with NPCs
 
 # Map Transition Settings
 MAP_TRANSITION_BUFFER: int = 30 # Pixels from edge to trigger transition

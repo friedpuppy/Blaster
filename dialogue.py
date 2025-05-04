@@ -1,8 +1,8 @@
 # dialogue.py
 import pygame
+from typing import Optional # <-- Import Optional
 from config import * # Assuming config defines colors like WHITE, BLACK, DARK_GRAY etc.
 # from sprites import * # Assuming sprites isn't strictly needed for DialogueBox itself
-import os # Import os for path joining
 
 # --- TextRectException and render_textrect remain the same ---
 class TextRectException(Exception): # Inherit from Exception for better practice
@@ -35,7 +35,6 @@ def render_textrect(string, font, rect, text_color, background_color, justificat
     Raises
         TextRectException if the text cannot fit.
     """
-    # print(f"--- render_textrect received font: {font}") # Debug print removed
     final_lines = []
     requested_lines = string.splitlines()
 
@@ -72,6 +71,13 @@ def render_textrect(string, font, rect, text_color, background_color, justificat
 
     for i, line in enumerate(final_lines):
         if accumulated_height + line_spacing > rect.height:
+            # Optional: Add an indicator like "..." if text overflows vertically
+            # if i > 0: # Check if there was at least one previous line
+            #     prev_line_surf = surface.copy() # Keep previous state
+            #     ellipsis_surf = font.render("...", True, text_color)
+            #     ellipsis_rect = ellipsis_surf.get_rect(bottomright=(rect.width, accumulated_height))
+            #     # Blit ellipsis slightly overlapping the last visible line's bottom
+            #     surface.blit(ellipsis_surf, ellipsis_rect)
 
             print(f"Warning: Text truncated. Content height ({accumulated_height + line_spacing}px) exceeds rect height ({rect.height}px).")
             break # Stop rendering lines that won't fit
@@ -103,7 +109,7 @@ def render_textrect(string, font, rect, text_color, background_color, justificat
 
 class DialogueBox(pygame.sprite.Sprite):
     # --- DialogueBox class remains the same ---
-    def __init__(self, game, text, x, y, width=600, height=200, font_size=30, font_name='White On Black.ttf'):
+    def __init__(self, game, text, x, y, width=600, height=200, font: Optional[pygame.font.Font] = None, font_size=30, font_name=None):
         super().__init__()
         self.game = game
         self._text = text # Use property for text
@@ -111,26 +117,16 @@ class DialogueBox(pygame.sprite.Sprite):
         self.y = y
         self.width = width
         self.height = height
-        try:
-            # Try loading from assets/fonts if it exists, otherwise use the name directly
-            # Ensure font_name includes the extension
-            font_path = os.path.abspath(os.path.join(ASSETS_DIR, 'Fonts', font_name)) # Get absolute path for clarity
-            if os.path.exists(font_path):
-                 # print(f"Attempting to load font from path: {font_path}") # Debug print removed
-                 self.font = pygame.font.Font(font_path, font_size) # Attempt load
-                 # print(f"Successfully created font object from path: {self.font}") # Debug print removed
-            else:
-                 print(f"Font file not found at: {font_path}. Attempting system font: {font_name}")
-                 # Fallback to system font or just the name if it's a system font
-                 self.font = pygame.font.Font(font_name, font_size)
-                 # print(f"Successfully created font object from system/name: {self.font}") # Debug print removed
-        except FileNotFoundError:
-            # This specific error is less likely now with the os.path.exists check, but good to keep
-            print(f"ERROR (FileNotFoundError): Font '{font_name}' not found. Using default Pygame font.")
+
+        # Use provided font object if available, otherwise try loading by name/size or default
+        if font:
+            self.font = font
+        elif font_name:
+            try:
+                self.font = pygame.font.Font(font_name, font_size)
+            except (FileNotFoundError, pygame.error):
+                print(f"Warning: Font '{font_name}' not found. Using default Pygame font.")
             self.font = pygame.font.Font(None, font_size) # Use default font if specified one fails
-        except pygame.error as e:
-             print(f"ERROR (pygame.error): Failed to load font '{font_name}' from path '{font_path if 'font_path' in locals() else 'N/A'}': {e}. Using default Pygame font.")
-             self.font = pygame.font.Font(None, font_size)
 
         self.text_color = BLACK # Use constants from config
         # Ensure background_color is RGB before adding alpha
@@ -185,7 +181,6 @@ class DialogueBox(pygame.sprite.Sprite):
         text_render_rect = pygame.Rect(0, 0, text_area_width, text_area_height)
 
         try:
-            # print(f"--- DialogueBox._render_text using font: {self.font}") # Debug print removed
             # Render text using the utility function. Pass SRCALPHA for transparency.
             self.text_surface = render_textrect(
                 self._text,
@@ -287,24 +282,24 @@ class Dialogue:
         """Resets the dialogue back to the first line."""
         self.current_line = 0
 
-# --- Updated Cutscene class ---
+# --- Cutscene class remains largely the same, ensure it takes lists ---
 class Cutscene:
-    """Represents a sequence of images, corresponding text lines, and optional background music for a cutscene."""
-    def __init__(self, image_paths: list[str | None], sentences: list[str], music_path: str | None = None):
+    # ... (Cutscene class definition) ...
+    """Represents a sequence of images and corresponding text lines for a cutscene."""
+    def __init__(self, image_paths: list[str | None], sentences: list[str], music_path: Optional[str] = None):
         """
         Args:
             image_paths (list[str | None]): A list of file paths to the images for each slide.
                                             Use None for slides with no image (e.g., black screen).
             sentences (list[str]): A list of text strings for each slide.
                                    Should have the same length as image_paths.
-            music_path (str | None, optional): File path to the background music for this cutscene.
-                                               Defaults to None (no music).
+            music_path (Optional[str]): Path to the music file for this cutscene, or None.
         """
         if len(image_paths) != len(sentences):
             raise ValueError("Cutscene image_paths and sentences lists must have the same length.")
+        self.music_path = music_path # Store the music path
         self.image_paths = image_paths
         self.sentences = sentences
-        self.music_path = music_path # Store the music path
         self.num_slides = len(sentences) # Store the total number of slides
 
 # --- Cleaned dialogues dictionary ---
@@ -317,6 +312,11 @@ dialogues = {
     "pierkeeper_generic": Dialogue("Pierkeeper", ["The pier needs fixing... it's a tragedy."]),
     "mayor_greeting": Dialogue("Mayor", ["Ah, hello there!", "Terrible business with the pier, isn't it?"]),
     "houseowner0_generic": Dialogue("Resident", ["Just admiring the view.", "Shame about the pier."]),
+    # Assign specific keys for each houseowner instance if needed later
+    "houseowner1_dialogue": Dialogue("Resident", ["It was such a lovely pier before the storm."]),
+    "houseowner2_dialogue": Dialogue("Resident", ["I hope they can repair it soon."]),
+    "houseowner3_dialogue": Dialogue("Resident", ["The town needs that pier."]),
+    "houseowner4_dialogue": Dialogue("Rude Resident", ["Go away!"]), # For the 4th one
     "houseowner1_generic": Dialogue("Resident", ["It was such a lovely pier before the storm."]),
     "houseowner2_generic": Dialogue("Resident", ["I hope they can repair it soon."]),
     "houseowner3_generic": Dialogue("Resident", ["The town needs that pier."]),
@@ -325,12 +325,19 @@ dialogues = {
     "new_story_npc_1": Dialogue("Mysterious Figure", ["Have you seen the state of the pier?", "Something doesn't feel right about that storm..."]),
     "shopkeeper_intro": Dialogue("Shopkeeper", ["Welcome!", "Looking for supplies?", "Can't offer much with the pier out of commission."]),
     # Add more as needed...
+
+    # --- Piermaster Ending Dialogue ---
+    # This key will be assigned to the Piermaster *only* on the 'pier_repaired' map
+    "piermaster_ending": Dialogue("Piermaster", [
+        "You... you actually did it!",
+        "With these funds, we can fully restore the pier to its former glory, maybe even better!",
+        "The town owes you a great debt. Thank you, truly.",
+        "Brighton's connection to the sea, its very heart, is saved thanks to you."
+    ]), # This dialogue finishing will trigger the end state
 }
 
-# --- Updated Dictionary for Collision-Triggered Cutscenes ---
+# --- NEW: Dictionary for Collision-Triggered Cutscenes ---
 # The keys (e.g., "story1") MUST match the 'CutsceneTrigger' property values set in Tiled.
-# Added the music_path argument to each Cutscene instance.
-# Replace placeholder paths with your actual music file paths.
 collision_cutscenes: dict[str, Cutscene] = {
     "intro_story": Cutscene( # Example key, replace with your Tiled value
         image_paths=[
@@ -340,24 +347,24 @@ collision_cutscenes: dict[str, Cutscene] = {
             f'{IMAGES_DIR}/cutscenes/intro_slide_3.png',
             None, # Example: A slide with just text on black background
         ],
+        music_path=f'{MUSIC_DIR}/Cutscene_Music_Intro.mp3', # Example music for intro
         sentences=[
             "It is the morning of October 16th in the year of our Lord 1833. A most terrible and violent storm the night prior has left the mighty Chain Pier in a ruinous state.",
             "The second bridge is hanging down almost touching the sea, a testament to the storm's fury.",
             "Only the twisted ropes of the third bridge remain, dangling uselessly over the churning waves.",
             "Work to repair it must be commenced as soon as possible, for without the Pier, the town's lifeline to the sea is severed!"
-        ],
-        music_path=f'{ASSETS_DIR}/Music/intro_theme.ogg' # Example music path
+        ]
     ),
     "another_story": Cutscene( # Example for a second trigger
          image_paths=[
              f'{IMAGES_DIR}/cutscenes/another_1.png',
              f'{IMAGES_DIR}/cutscenes/another_2.png',
          ],
+         music_path=None, # No music for this one
          sentences=[
              "This is the first part of another story, triggered by a different collision.",
              "And this is the concluding slide for that story. Press Enter to return to the game.",
-         ],
-         music_path=f'{ASSETS_DIR}/Music/another_story_music.ogg' # Example music path
+         ]
     ),
 
     # --- STORY1 STORY ONE STORY 1 ---
@@ -371,6 +378,7 @@ collision_cutscenes: dict[str, Cutscene] = {
             f'{IMAGES_DIR}/story1.jpg', # Slide 6
             f'{IMAGES_DIR}/story1.jpg'  # Slide 7
         ],
+        music_path=f'{MUSIC_DIR}/Cutscene_Music_1.mp3', # Example: Add the path to the music
         sentences=[
             # Slide 1
             "Brighton's storms were no strangers—grey, thrashing things that rolled off the Channel like clockwork. But this one, the one they'd later call the Birthday Storm, had teeth.",
@@ -386,8 +394,9 @@ collision_cutscenes: dict[str, Cutscene] = {
             "Father snorted. “Birthday Storm,” he'd grumble, kneading his knee when the air turned salt-thick. “Sea's just remindin' us who’s boss.” Brighton patched the planks, slapped on fresh paint. Tourists flocked back.",
             # Slide 7
             "But whenever the wind snapped, Father's face went taut, his hand gripping the cane like it was the only thing holding him upright. We build. The sea undoes it."
-        ],
-        music_path=f'{ASSETS_DIR}/Music/story1_theme.ogg' # Example music path for story 1
+
+        ]
+
     ),
     # -------------------------
 
@@ -403,6 +412,7 @@ collision_cutscenes: dict[str, Cutscene] = {
             f'{IMAGES_DIR}/story2.jpg', # Slide 7
             f'{IMAGES_DIR}/story2.jpg', # Slide 8
         ],
+        music_path=None, # Example: This one has no specific music
         sentences=[
             # Slide 1
             "The woman taps the watercolour above her mantel. “That's *Brighthelmston* by Turner—1824, just after the pier opened. Come, look closer.”",
@@ -420,29 +430,20 @@ collision_cutscenes: dict[str, Cutscene] = {
             "She plucks a magnifying glass from her desk. “St. Nicholas’s spire, the Duke of York’s Hotel… all here. Even the half-built Marine Parade. History in a storm.”",
             # Slide 8
             "Her tone softens. “The rainbow’s the joke, though. We build piers, ships, promenades. Nature builds tempests. Turner knew which’d last.” She hands you the glass. “Keep looking. That boat’s still sinking.”"
-        ],
-        music_path=f'{ASSETS_DIR}/Music/story2_theme.ogg' # Example music path for story 2
+        ]
+
     ),
 
       # --- STORY 3 STORY THREE STORY3 ---
     "houseowner3_cutscene": Cutscene(
         image_paths=[
-            f'{IMAGES_DIR}/story3.jpg', # Slide 1
-            f'{IMAGES_DIR}/story3.jpg', # Slide 2
-            f'{IMAGES_DIR}/story3.jpg', # Slide 3
-            f'{IMAGES_DIR}/story3.jpg', # Slide 4
+            f'{IMAGES_DIR}/story3.jpg' # Updated path
         ],
+        music_path=None,
         sentences=[
-            # Slide 1
-            "Ever read Porden’s diary from 1802? Crossed to Dieppe on the Eliza—cramped boxes stacked like coffins, he called the cabins. No portholes. Want light? Open your door to the dining room’s chaos. Privacy meant sitting in the dark or burning your own candle. Bedding? Haul it yourself—part of your 400-pound allowance. At least officers shared their table, though the return trip made you pack your own food, even after they gouged your coin.",
-            # Slide 2
-            "Porden sketched the layout—‘cabinetts stretched too large,’ he scribbled. Took 18 hours. Just boarding was a farce: Eleanor, his daughter, green-faced, hauled into a cot while waves tossed their rowboat. Cabins had curtains for decency, but nothing stifled the stench. Boys swapped sick basins like ghosts.",
-            # Slide 3
-            "Miss Appleton, though—poor soul. Puked from Brighton till Dieppe, left forgotten on the ship. Porden called her ‘courageous’—a tall, sharp-tongued bluestocking, fluent in French, traveling alone. Carried ashore on a sailor’s back, insensible.",
-            # Slide 4
-            "Customs cleared, they limped to the English Hotel. Charged London prices for slop, Porden griped. Imagine it—eighteen hours of retching, then overpaying for gristle. Chain Pier’s cushy ferries? Saints’ work compared to this.\" Her smirk was sharp as she jabbed the diary. \"Romantic age, my arse.\""
-        ],
-        music_path=f'{ASSETS_DIR}/Music/story3_theme.ogg' # Example music path for story 3
+            # Updated sentence to match image
+            "A depiction of the terrible storm of 1824. Press Enter to close."
+        ]
     ),
 
           # --- GO AWAY ---
@@ -450,12 +451,28 @@ collision_cutscenes: dict[str, Cutscene] = {
         image_paths=[
             None,
         ],
+        music_path=None,
         sentences=[
             # Updated sentence to match image
             "Go away."
-        ],
-        music_path=None # No music for this one
+        ]
     ),
     # Add more entries here for each 'CutsceneTrigger' value you defined in Tiled
     # "story_trigger_3": Cutscene(...)
 }
+
+# --- Cutscene class (from original file, now potentially redundant if using collision_cutscenes) ---
+# You can keep this if you use it elsewhere, or remove it if collision_cutscenes replaces its use case.
+# class Cutscene:
+#     def __init__(self, sentences, images):
+#         self.sentences = sentences
+#         self.images = images
+
+# --- cutscenes dictionary (from original file, now potentially redundant) ---
+# Keep or remove based on whether you still need the 'intro' cutscene triggered differently.
+# cutscenes = {
+#     "intro": Cutscene(
+#         sentences=[ ... ], images=[ ... ]
+#     )
+# }
+

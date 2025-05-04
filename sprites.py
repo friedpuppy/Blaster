@@ -121,6 +121,7 @@ class Piermaster(pygame.sprite.Sprite):
         # Get the rectangular area of the image and set its center position
         self.rect = self.image.get_rect(center=(x, y))
 
+        self.dialogue_key = "pierkeeper_generic" # Link to dialogue dictionary
     # No update method is needed for a static NPC unless it needs animation,
     # pathfinding, or other dynamic behavior later.
     # def update(self, *args, **kwargs) -> None:
@@ -157,6 +158,8 @@ class Mayor(pygame.sprite.Sprite):
              self.image.fill((0, 255, 0)) # Green square fallback
          # 2. get a rect whose dimensions match the loaded images (self.image)    
          self.rect = self.image.get_rect(center=(x, y))
+
+         self.dialogue_key = "mayor_greeting" # Link to dialogue dictionary
      # Add update method if the Mayor needs to move or animate
      # def update(self, *args, **kwargs) -> None:
      #     pass
@@ -167,7 +170,7 @@ class Houseowner(pygame.sprite.Sprite):
      Can be instantiated with different images and positions.
      """
      # Add image_path parameter with a default fallback (optional)
-     def __init__(self, x: int, y: int, image_path: str = config.HOUSEOWNER_IMAGE) -> None:
+     def __init__(self, x: int, y: int, image_path: str = config.HOUSEOWNER_IMAGE, dialogue_key: str = "houseowner0_generic") -> None:
          super().__init__()
          try:
              # Load the image file specified by the image_path parameter
@@ -180,6 +183,8 @@ class Houseowner(pygame.sprite.Sprite):
              self.image.fill((128, 0, 128)) # Purple square fallback
          # Get a rect whose dimensions match the loaded image (self.image)
          self.rect = self.image.get_rect(center=(x, y))
+
+         self.dialogue_key = dialogue_key # Assign the provided dialogue key
 
      # Add update method if Houseowner needs to move or animate later
      # def update(self, *args, **kwargs) -> None:

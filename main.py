@@ -60,7 +60,7 @@ class Game:
         self.current_background_music_path: Optional[str] = None # Track currently playing BGM
 
         # --- Game State ---
-        self.game_state: str = 'intro' # Start in the 'intro' state
+        self.game_state: str = 'intro' # 'intro', 'playing', 'dialogue', 'cutscene', 'ending'
 
         # --- Cutscene State Variables ---
         self.active_cutscene: Optional[Cutscene] = None
@@ -73,6 +73,11 @@ class Game:
         self.show_player_coords: bool = False # Flag to control coordinate display
         self.triggered_cutscenes = set() # Keep track of which cutscenes have been played (per map load)
         self.cutscene_music_fadeout_time = 500 # Milliseconds for music fade-out
+
+        # --- Dialogue State Variables ---
+        self.active_dialogue: Optional[Dialogue] = None
+        self.dialogue_box: Optional[DialogueBox] = None # Use a single box, update its text
+        self.interact_prompt_surf: Optional[pygame.Surface] = None # Surface for "Press E"
 
         # --- Pier Repair State Variables Removed ---
         # --- Font Initialization ---
@@ -118,32 +123,41 @@ class Game:
         self.mayor = sprites.Mayor(0, 0)
 
         # Store houseowner image paths (positions are now handled by NPC_POSITIONS)
+        # Use tuples: (image_path, dialogue_key)
         houseowner_data = [
-            config.HOUSEOWNER_DEFAULT_IMAGE,
-            config.HOUSEOWNER_ONE_IMAGE,
-            config.HOUSEOWNER_TWO_IMAGE,
-            config.HOUSEOWNER_THREE_IMAGE,
+            (config.HOUSEOWNER_DEFAULT_IMAGE, "houseowner0_generic"), # Use default key for the first one
+            (config.HOUSEOWNER_ONE_IMAGE, "houseowner1_dialogue"), # Tuple: (image_path, dialogue_key)
+            (config.HOUSEOWNER_TWO_IMAGE, "houseowner2_dialogue"),
+            (config.HOUSEOWNER_THREE_IMAGE, "houseowner3_dialogue"),
+            (config.HOUSEOWNER_THREE_IMAGE, "houseowner4_dialogue"), # Reuse image for 4th, different dialogue
         ]
         self.houseowners: List[sprites.Houseowner | None] = [] # Use a list
+        # --- Corrected Houseowner Initialization Loop ---
         try:
-            # Create Houseowner instances with placeholder positions (0, 0)
-            for img_path in houseowner_data:
-                # Pass 0, 0 as initial coords; they will be updated in load_map
-                self.houseowners.append(sprites.Houseowner(0, 0, img_path))
+            for item in houseowner_data:
+                if isinstance(item, tuple):
+                    img_path, dialogue_key = item
+                else: # Assume it's just an image path string
+                    img_path = item
+                    dialogue_key = "houseowner_generic" # Fallback dialogue key if only path provided
+                # Pass 0, 0 as initial coords, the image path, and the dialogue key
+                self.houseowners.append(sprites.Houseowner(0, 0, img_path, dialogue_key))
             print(f"Initialized {len(self.houseowners)} Houseowner instances.")
-        except AttributeError as e:
-             print(f"Error initializing Houseowners (check image constants in config.py): {e}")
-             self.houseowners = [] # Clear list on error
         except Exception as e: # Catch other potential errors during init
              print(f"Unexpected error initializing Houseowners: {e}")
              self.houseowners = [] # Clear list on error
 
 
-        # --- Dialogue Box Initialization (for testing/other uses) ---
+        # --- Dialogue Box Initialization (reusable) ---
         dialogue_box_x = (config.SCREEN_WIDTH / 2) - 300
         dialogue_box_y = config.SCREEN_HEIGHT - 250
-        test_message = "Test Dialogue Box (Press T)"
-        self.test_dialogue_box = DialogueBox(self, test_message, dialogue_box_x, dialogue_box_y)
+        # Initialize with empty text, it will be updated when dialogue starts
+        # Pass the already loaded ui_font instead of font name/size
+        if self.ui_font:
+            self.dialogue_box = DialogueBox(self, "", dialogue_box_x, dialogue_box_y, font=self.ui_font)
+        else:
+            print("CRITICAL: Cannot create DialogueBox because ui_font failed to load.")
+            self.running = False # Stop if font is missing
 
         # --- Intro Screen Assets ---
         self.intro_background: Optional[pygame.Surface] = None
@@ -173,6 +187,22 @@ class Game:
             # Potentially set game state to error or quit
             self.running = False
 
+        # --- Ending Screen Assets ---
+        self.ending_background: Optional[pygame.Surface] = None
+        self.ending_title_surf: Optional[pygame.Surface] = None
+        self.ending_title_rect: Optional[pygame.Rect] = None
+        self.ending_text_surf: Optional[pygame.Surface] = None
+        self.ending_text_rect: Optional[pygame.Rect] = None
+
+        try:
+            # Load ending background
+            self.ending_background = pygame.image.load(config.ENDING_BACKGROUND_IMAGE).convert()
+            self.ending_background = pygame.transform.smoothscale(self.ending_background, self.screen.get_size())
+            # Pre-render ending text (can be done here or when entering the state)
+            self._prepare_ending_screen_text()
+        except (pygame.error, FileNotFoundError) as e:
+            print(f"Error loading ending assets: {e}")
+            # Decide how to handle this - maybe a fallback screen?
         # --- Map Loading Deferred ---
         # Map will be loaded when transitioning from 'intro' to 'playing' state
         #self.load_map('streets') # Start on the streets map
@@ -221,6 +251,10 @@ class Game:
                 pos = npc_positions_for_map['piermaster']
                 self.piermaster.rect.center = pos
                 self.group.add(self.piermaster)
+                # SPECIAL CASE: Assign ending dialogue only on repaired pier
+                if map_key == 'pier_repaired':
+                    self.piermaster.dialogue_key = "piermaster_ending"
+                    print("  Piermaster assigned ENDING dialogue.")
                 print(f"  Added Piermaster at {pos}")
 
             # Add Mayor if defined for this map
@@ -234,8 +268,10 @@ class Game:
             for i in range(len(self.houseowners)):
                 houseowner_key = f'houseowner_{i}'
                 if houseowner_key in npc_positions_for_map and self.houseowners[i]:
+                    # Assign specific dialogue key based on index (matches houseowner_data in __init__)
+                    dialogue_key = f"houseowner{i}_dialogue" # Assumes keys like 'houseowner0_dialogue', etc. exist
                     pos = npc_positions_for_map[houseowner_key]
-                    self.houseowners[i].rect.center = pos
+                    self.houseowners[i].rect.center = pos # Set position
                     self.group.add(self.houseowners[i])
                     print(f"  Added Houseowner {i} at {pos}")
 
@@ -355,6 +391,53 @@ class Game:
             # --- Update the last known properties for the next frame ---
             self.last_event_tile_properties = current_tile_properties
 
+    def find_nearby_interactable_npc(self) -> Optional[pygame.sprite.Sprite]:
+        """Finds the closest NPC within interaction range that has a dialogue key."""
+        if not self.player or not self.group:
+            return None
+
+        player_pos = pygame.Vector2(self.player.hitbox.center)
+        closest_npc = None
+        min_dist_sq = config.INTERACTION_DISTANCE ** 2 # Use squared distance for efficiency
+
+        # Iterate through sprites in the group that are NPCs and have dialogue
+        for sprite in self.group.sprites():
+            # Check if it's an NPC instance we care about and has a dialogue key
+            if isinstance(sprite, (sprites.Piermaster, sprites.Mayor, sprites.Houseowner)) and hasattr(sprite, 'dialogue_key'):
+                npc_pos = pygame.Vector2(sprite.rect.center)
+                dist_sq = player_pos.distance_squared_to(npc_pos)
+
+                if dist_sq < min_dist_sq:
+                    min_dist_sq = dist_sq
+                    closest_npc = sprite
+
+        return closest_npc
+
+    def start_dialogue(self, npc: pygame.sprite.Sprite) -> None:
+        """Starts a dialogue sequence with the given NPC."""
+        if self.game_state != 'playing' or not hasattr(npc, 'dialogue_key'):
+            return # Can only start dialogue from playing state with a valid NPC
+
+        dialogue_key = npc.dialogue_key
+        if dialogue_key in dialogues:
+            self.active_dialogue = dialogues[dialogue_key]
+            self.active_dialogue.reset() # Start from the first line
+            first_line = self.active_dialogue.get_current_line()
+            if first_line and self.dialogue_box:
+                self.dialogue_box.update_text(f"{self.active_dialogue.name}: {first_line}")
+                self.dialogue_box.show()
+                self.game_state = 'dialogue' # Change game state
+                print(f"Starting dialogue: {dialogue_key}")
+            else:
+                print(f"Warning: Dialogue '{dialogue_key}' has no lines.")
+                self.active_dialogue = None # Ensure no active dialogue if empty
+        else:
+            print(f"Warning: Dialogue key '{dialogue_key}' not found for NPC.")
+
+    def advance_dialogue(self) -> None:
+        """Advances to the next line or ends the dialogue."""
+        if self.game_state != 'dialogue' or not self.active_dialogue or not self.dialogue_box:
+            return
 
     def handle_map_transitions(self) -> None:
         """Checks for map transitions."""
@@ -568,6 +651,26 @@ class Game:
         # Optional: Add a small delay before player can move again?
         # pygame.time.wait(200) # e.g., 200ms pause
 
+    def _prepare_ending_screen_text(self):
+        """Renders the text surfaces for the ending screen."""
+        if self.title_font and self.ui_font:
+            try:
+                # Ending Title
+                self.ending_title_surf = self.title_font.render("The End", True, config.WHITE)
+                self.ending_title_rect = self.ending_title_surf.get_rect(centerx=config.SCREEN_WIDTH / 2, y=150)
+
+                # Ending Body Text (using render_textrect for wrapping)
+                ending_message = ("Congratulations!\n\n"
+                                  "Thanks to your efforts, the Chain Pier has been saved, "
+                                  "and Brighton's future looks bright once more.\n\n"
+                                  "Press ESCAPE to exit.")
+                text_box_width = config.SCREEN_WIDTH - 200 # Width for text wrapping
+                text_box_height = 300
+                text_render_rect = pygame.Rect(0, 0, text_box_width, text_box_height)
+                self.ending_text_surf = render_textrect(ending_message, self.ui_font, text_render_rect, config.WHITE, (0,0,0,0), justification=1) # Centered text
+                self.ending_text_rect = self.ending_text_surf.get_rect(centerx=config.SCREEN_WIDTH / 2, centery=config.SCREEN_HEIGHT / 2 + 50)
+            except Exception as e:
+                print(f"Error preparing ending screen text: {e}")
     # --- Main Game Loop Methods ---
 
     def run(self) -> None:
@@ -593,9 +696,13 @@ class Game:
             if self.game_state == 'playing':
                 # Handle gameplay input (movement is handled in Player.update)
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_t: # Toggle test dialogue
-                        print("T key pressed - Toggling test dialogue box.")
-                        self.test_dialogue_box.toggle()
+                    if event.key == pygame.K_e: # Interaction key
+                        nearby_npc = self.find_nearby_interactable_npc()
+                        if nearby_npc:
+                            print(f"E key pressed - Interacting with {type(nearby_npc).__name__}")
+                            self.start_dialogue(nearby_npc)
+                        else:
+                            print("E key pressed - No interactable NPC nearby.")
                     elif event.key == pygame.K_q: # DEBUG: Set accumulator to 300
                         global accumulator
                         accumulator = 300
@@ -605,6 +712,24 @@ class Game:
                         print(f"Coordinate display toggled: {'ON' if self.show_player_coords else 'OFF'}")
                         # No immediate check needed, update loop will handle the transition
                     # Add other gameplay keybinds here (e.g., interaction key)
+
+            elif self.game_state == 'dialogue':
+                 if event.type == pygame.KEYDOWN:
+                     if event.key == pygame.K_RETURN or event.key == pygame.K_e: # Use Enter or E to advance
+                         print("Advancing dialogue...")
+                         next_line = self.active_dialogue.next_line()
+                         if next_line:
+                             self.dialogue_box.update_text(f"{self.active_dialogue.name}: {next_line}")
+                         else:
+                             # Dialogue finished
+                             print("Dialogue finished.")
+                             self.dialogue_box.hide()
+                             # Check if it was the Piermaster's ENDING dialogue
+                             if self.active_dialogue == dialogues.get("piermaster_ending"):
+                                 self.game_state = 'ending' # <<< TRANSITION TO ENDING
+                             else:
+                                 self.game_state = 'playing' # Return to gameplay
+                             self.active_dialogue = None
 
             elif self.game_state == 'cutscene':
                 # Handle cutscene input (only Enter key)
@@ -629,6 +754,11 @@ class Game:
                     print("Play button pressed - Starting game.")
                     self.game_state = 'playing'
                     self.load_map('pier') # Load the initial map NOW
+
+            elif self.game_state == 'ending':
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE: # Exit game from ending screen
+                        self.running = False
 
     def update(self, dt: float) -> None:
         """Updates the game state based on the current game_state."""
@@ -658,6 +788,14 @@ class Game:
                             self.group.center(self.player.rect.center)
 
                 # --- Collision check for triggers is removed ---
+
+        elif self.game_state == 'dialogue':
+            # Potentially add blinking cursor or other dialogue effects here
+            pass
+
+        elif self.game_state == 'ending':
+            # No game world updates needed for static ending screen
+            pass
 
         elif self.game_state == 'cutscene':
             # No game world updates happen during a cutscene
@@ -714,9 +852,19 @@ class Game:
                         # Optional: Update ui_y_offset again if more UI elements are added below
                         # ui_y_offset += coords_surf_white.get_height() + 5
 
-                # Draw test dialogue box if active
-                if hasattr(self, 'test_dialogue_box'):
-                    self.test_dialogue_box.draw(self.screen)
+                # --- Draw Interaction Prompt ---
+                nearby_npc = self.find_nearby_interactable_npc()
+                if nearby_npc and self.ui_font:
+                    if not self.interact_prompt_surf: # Render only once if needed
+                        self.interact_prompt_surf = self.ui_font.render("Press E to talk", True, config.BLACK, config.LIGHT_BLUE)
+                    prompt_rect = self.interact_prompt_surf.get_rect(midbottom=nearby_npc.rect.midtop - pygame.Vector2(0, 5)) # Position above NPC
+                    self.screen.blit(self.interact_prompt_surf, prompt_rect)
+                else:
+                    self.interact_prompt_surf = None # Clear surface if no NPC nearby
+
+                # Draw dialogue box if active (now handled by dialogue state)
+                # if hasattr(self, 'test_dialogue_box'):
+                #     self.test_dialogue_box.draw(self.screen)
 
                 # --- DEBUG: Draw Player Hitbox (uncomment if needed) ---
                 # pygame.draw.rect(self.screen, (255, 0, 0), self.player.hitbox, 1)
@@ -752,6 +900,11 @@ class Game:
                  # self.screen.blit(shadow_surf, prompt_rect.move(1,1)) # Offset shadow slightly
                  self.screen.blit(prompt_surf, prompt_rect)
 
+        elif self.game_state == 'dialogue':
+            # Draw the normal game world *underneath* the dialogue box
+            if self.group and self.map_layer:
+                self.group.draw(self.screen) # Draw map and sprites
+            self.dialogue_box.draw(self.screen) # Draw dialogue box on top
         elif self.game_state == 'intro':
             # --- Draw Intro Screen ---
             # Draw background
@@ -765,6 +918,19 @@ class Game:
             # Draw button
             if self.play_button:
                 self.play_button.draw(self.screen)
+
+        elif self.game_state == 'ending':
+            # --- Draw Ending Screen ---
+            if self.ending_background:
+                self.screen.blit(self.ending_background, (0, 0))
+            else:
+                self.screen.fill(config.BLACK) # Fallback
+            if self.ending_title_surf and self.ending_title_rect:
+                self.screen.blit(self.ending_title_surf, self.ending_title_rect)
+            if self.ending_text_surf and self.ending_text_rect:
+                self.screen.blit(self.ending_text_surf, self.ending_text_rect)
+            # Add "Press ESC" prompt if not included in main text
+
 
         # Update the display regardless of state
         pygame.display.flip()
