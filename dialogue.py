@@ -2,7 +2,7 @@
 import pygame
 from typing import Optional # <-- Import Optional
 from config import * # Assuming config defines colors like WHITE, BLACK, DARK_GRAY etc.
-# from sprites import * # Assuming sprites isn't strictly needed for DialogueBox itself
+import config # <-- Import config to access MAP_MUSIC_PATHS
 
 # --- TextRectException and render_textrect remain the same ---
 class TextRectException(Exception): # Inherit from Exception for better practice
@@ -309,20 +309,16 @@ dialogues = {
     "rude_npc": Dialogue("RudeNPC", ["Go away! I don't have time for you.", "Leave me alone!"]),
 
     # --- Dialogue Keys for NPCs (Make sure these match keys used in main.py) ---
-    "pierkeeper_generic": Dialogue("Pierkeeper", ["It's a terrible wreck... The pier is totally gone.", 
-                                                "What's that? You say you're a fanatic of the pier, and wish to help?",
-                                                "Go talk to the mayor, and come back to me when you've followed his instructions!", "His house is to the left."]),
+    "pierkeeper_generic": Dialogue("Pierkeeper", ["It's a terrible wreck... The pier is totally gone\n\n....what's that? You say you wish to help?",
+                                                "Go talk to the mayor, perhaps he can fund the repairs!\n\nHis house is to the left."]),
     "mayor_greeting": Dialogue("Mayor", ["Ah, hello there!", "Fine gentleman, you wish to help with the restoration of the pier?",
-                                         "I see! Go into town to the left, and collect subscriptions from the townsfolk. If you can raise £300, we can provide the rest.", "Hurry!"]),
-    "houseowner0_generic": Dialogue("Resident", ["What's that? You're collecting subscriptions for the pier repairs?", 
-                                                 "I can gladly offer some money.", 
+                                         "I see! if you can collect donations from the townsfolk I will help. If you can raise £300, we can provide the rest.", "Hurry!"]),
+    "houseowner0_generic": Dialogue("Resident", ["What's that? You're collecting subscriptions for the pier repairs?\n\nI can gladly offer some money.", 
                                                  "Step into my house and I'll tell you a story about the great Birthday Storm of 1824."]),
     # Assign specific keys for each houseowner instance if needed later
-    "houseowner1_dialogue": Dialogue("Resident", ["What's that? You're collecting subscriptions for the pier repairs?", 
-                                                  "I can gladly offer some money.", 
+    "houseowner1_dialogue": Dialogue("Resident", ["What's that? You're collecting subscriptions for the pier repairs?\n\nI can gladly offer some money.", 
                                                   "Step into my house and I'll tell you about the time Turner came to visit."]),
-    "houseowner2_dialogue": Dialogue("Resident", ["What's that? You're collecting subscriptions for the pier repairs?", 
-                                                  "I can gladly offer some money.", 
+    "houseowner2_dialogue": Dialogue("Resident", ["What's that? You're collecting subscriptions for the pier repairs?\n\nI can gladly offer some money.", 
                                                   "Step into my house and I'll tell you a story of what life was like before that wonderful pier."]),
     "houseowner3_dialogue": Dialogue("Resident", ["Go away!"]),
     "houseowner4_dialogue": Dialogue("Rude Resident", ["Go away!"]), # For the 4th one
@@ -338,8 +334,7 @@ dialogues = {
     # --- Piermaster Ending Dialogue ---
     # This key will be assigned to the Piermaster *only* on the 'pier_repaired' map
     "piermaster_ending": Dialogue("Piermaster", [
-        "You... you actually did it!",
-        "With these funds, we can fully restore the pier to its former glory, maybe even better!",
+        "You... you actually did it!\n\nWith these funds, we can fully restore the pier to its former glory, maybe even better!",
         "The town owes you a great debt. Thank you, truly.",
         "Brighton's connection to the sea, its very heart, is saved thanks to you."
     ]), # This dialogue finishing will trigger the end state
@@ -356,7 +351,7 @@ collision_cutscenes: dict[str, Cutscene] = {
             f'{IMAGES_DIR}/cutscenes/intro_slide_3.png',
             None, # Example: A slide with just text on black background
         ],
-        music_path=f'{MUSIC_DIR}/Cutscene_Music_Intro.mp3', # Example music for intro
+        music_path=config.MAP_MUSIC_PATHS.get('streets'), # Use 'When The Wind Blows'
         sentences=[
             "It is the morning of October 16th in the year of our Lord 1833. A most terrible and violent storm the night prior has left the mighty Chain Pier in a ruinous state.",
             "The second bridge is hanging down almost touching the sea, a testament to the storm's fury.",
@@ -369,7 +364,7 @@ collision_cutscenes: dict[str, Cutscene] = {
              f'{IMAGES_DIR}/cutscenes/another_1.png',
              f'{IMAGES_DIR}/cutscenes/another_2.png',
          ],
-         music_path=None, # No music for this one
+        music_path=config.MAP_MUSIC_PATHS.get('streets'), # Use 'When The Wind Blows'
          sentences=[
              "This is the first part of another story, triggered by a different collision.",
              "And this is the concluding slide for that story. Press Enter to return to the game.",
@@ -387,7 +382,7 @@ collision_cutscenes: dict[str, Cutscene] = {
             f'{IMAGES_DIR}/story1 copy.jpg', # Slide 6
             f'{IMAGES_DIR}/story1 copy.jpg'  # Slide 7
         ],
-        music_path=f'{MUSIC_DIR}/Cutscene_Music_1.mp3', # Example: Add the path to the music
+        music_path=f'{MUSIC_DIR}/waves.mp3', # Use waves sound
         sentences=[
             # Slide 1
             "Brighton's storms were no strangers—grey, thrashing things that rolled off the Channel like clockwork. But this one, the one they'd later call the Birthday Storm, had teeth.",
@@ -421,7 +416,7 @@ collision_cutscenes: dict[str, Cutscene] = {
             f'{IMAGES_DIR}/story2.jpg', # Slide 7
             f'{IMAGES_DIR}/story2.jpg', # Slide 8
         ],
-        music_path=None, # Example: This one has no specific music
+        music_path=f'{MUSIC_DIR}/waves.mp3', # Use waves sound
         sentences=[
             # Slide 1
             "The man taps the watercolour above his mantel. \"That's *Brighthelmston* by Turner—1824, just after the pier opened. Come, look closer.\"",
@@ -451,7 +446,7 @@ collision_cutscenes: dict[str, Cutscene] = {
             f'{IMAGES_DIR}/story3.jpg', # Slide 3 Image
             f'{IMAGES_DIR}/story3.jpg'  # Slide 4 Image
         ],
-        music_path=None,
+        music_path=f'{MUSIC_DIR}/waves.mp3', # Use waves sound
         sentences=[
             # Slide 1 Text
             "Ever read Porden's diary from 1802? Crossed to Dieppe on the Eliza—cramped boxes stacked like coffins, he called the cabins. No portholes. Want light? Open your door to the dining room's chaos. Privacy meant sitting in the dark or burning your own candle. Bedding? Haul it yourself—part of your 400-pound allowance. At least officers shared their table, though the return trip made you pack your own food, even after they gouged your coin.",
@@ -469,7 +464,7 @@ collision_cutscenes: dict[str, Cutscene] = {
         image_paths=[
             None,
         ],
-        music_path=None,
+        music_path=f'{MUSIC_DIR}/waves.mp3', # Use waves sound
         sentences=[
             # Updated sentence to match image
             "Go away."

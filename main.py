@@ -84,11 +84,11 @@ class Game:
         # --- Font Initialization ---
         try:
             # Font for general UI (like FPS counter)
-            self.ui_font = pygame.font.Font(None, 30)
-            self.title_font = pygame.font.Font(None, 60) # Font for the intro title
+            self.ui_font = pygame.font.Font(None, 36) # Increased size
+            self.title_font = pygame.font.Font(None, 72) # Increased size
             # Font for the funds display (using your custom font)
             funds_font_name = 'White On Black.ttf'
-            funds_font_size = 30 # Or adjust as needed
+            funds_font_size = 36 # Increased size (matches ui_font)
             funds_font_path = os.path.abspath(os.path.join(config.ASSETS_DIR, 'Fonts', funds_font_name))
             if os.path.exists(funds_font_path):
                 print(f"Attempting to load funds font from path: {funds_font_path}")
@@ -99,13 +99,13 @@ class Game:
                 self.funds_font = self.ui_font # Fallback to the default UI font
 
             # Font specifically for cutscene text (can be different)
-            self.cutscene_font = pygame.font.Font(None, 28) # Example size
-            self.epilogue_font = pygame.font.Font(None, 36) # <-- New: Larger font for epilogue body
-            self.epilogue_title_font = pygame.font.Font(None, 72) # <-- New: Larger font for epilogue title
+            self.cutscene_font = pygame.font.Font(None, 34) # Increased size
+            self.epilogue_font = pygame.font.Font(None, 42) # Increased size
+            self.epilogue_title_font = pygame.font.Font(None, 84) # Increased size
             print("UI and Cutscene Fonts initialized.")
 
         except pygame.error as e:
-            print(f"Error initializing funds font '{funds_font_name}': {e}. Using default UI font.")
+            print(f"Error initializing funds font '{funds_font_name}': {e}. Using default UI font.") # Fallback size will also be larger now
             self.funds_font = pygame.font.Font(None, 30) # Ensure fallback on error
         except Exception as e: # Catch other potential font loading errors
             print(f"Error initializing fonts: {e}")
