@@ -61,7 +61,7 @@ class Game:
         self.current_background_music_path: Optional[str] = None # Track currently playing BGM
 
         # --- Game State ---
-        self.game_state: str = 'intro' # 'intro', 'playing', 'dialogue', 'cutscene', 'ending'
+        self.game_state: str = 'intro' # 'intro', 'playing', 'dialogue', 'cutscene', 'ending', 'confirm_quit'
 
         # --- Cutscene State Variables ---
         self.active_cutscene: Optional[Cutscene] = None
@@ -192,6 +192,31 @@ class Game:
             # Potentially set game state to error or quit
             self.running = False
 
+        # --- Quit Confirmation Dialog Assets ---
+        self.confirm_quit_box_surf: Optional[pygame.Surface] = None
+        self.confirm_quit_text_surf: Optional[pygame.Surface] = None
+        self.confirm_quit_text_rect: Optional[pygame.Rect] = None
+        self.yes_button: Optional[Button] = None
+        self.no_button: Optional[Button] = None
+        self._prepare_quit_confirmation_assets() # Create surfaces and buttons
+
+        # --- Fullscreen / Scaling Setup ---
+        self.native_screen_width = screen.get_width()
+        self.native_screen_height = screen.get_height()
+        # Create the surface where the actual game rendering happens at the fixed resolution
+        self.game_surface = pygame.Surface((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+
+        # Calculate integer scaling factor
+        scale_w = self.native_screen_width // config.SCREEN_WIDTH
+        scale_h = self.native_screen_height // config.SCREEN_HEIGHT
+        self.scale_factor = max(1, min(scale_w, scale_h)) # Ensure scale is at least 1
+
+        self.scaled_width = config.SCREEN_WIDTH * self.scale_factor
+        self.scaled_height = config.SCREEN_HEIGHT * self.scale_factor
+
+        # Calculate offset to center the scaled surface on the native screen
+        self.blit_offset_x = (self.native_screen_width - self.scaled_width) // 2
+        self.blit_offset_y = (self.native_screen_height - self.scaled_height) // 2
         # --- Ending Screen Assets ---
         self.ending_background: Optional[pygame.Surface] = None
         self.ending_title_surf: Optional[pygame.Surface] = None
@@ -260,6 +285,40 @@ class Game:
         # Map will be loaded when transitioning from 'intro' to 'playing' state
         #self.load_map('streets') # Start on the streets map
 
+    def _prepare_quit_confirmation_assets(self):
+        """Creates the surfaces and buttons for the quit confirmation dialog."""
+        if not self.ui_font:
+            print("Error: Cannot prepare quit confirmation assets - UI font not loaded.")
+            return
+
+        box_width = 400
+        box_height = 150
+        box_x = (config.SCREEN_WIDTH - box_width) // 2 # Center on game_surface
+        box_y = (config.SCREEN_HEIGHT - box_height) // 2
+
+        # Create the background box surface (semi-transparent dark gray)
+        self.confirm_quit_box_surf = pygame.Surface((box_width, box_height), pygame.SRCALPHA)
+        self.confirm_quit_box_surf.fill((*config.DARK_GRAY, 220)) # Use RGBA with alpha
+        pygame.draw.rect(self.confirm_quit_box_surf, config.WHITE, self.confirm_quit_box_surf.get_rect(), 2) # White border
+        self.confirm_quit_box_rect = self.confirm_quit_box_surf.get_rect(topleft=(box_x, box_y))
+
+        # Render the confirmation text
+        text = "Are you sure you want to quit?"
+        self.confirm_quit_text_surf = self.ui_font.render(text, True, config.WHITE)
+        self.confirm_quit_text_rect = self.confirm_quit_text_surf.get_rect(centerx=box_width // 2, y=20) # Position text inside the box
+
+        # Create Yes/No buttons
+        button_width, button_height = 100, 40
+        button_y = box_height - button_height - 20 # Position buttons near bottom
+        button_padding = 30 # Space between buttons
+
+        yes_button_x = (box_width // 2) - button_width - (button_padding // 2)
+        no_button_x = (box_width // 2) + (button_padding // 2)
+
+        # Note: Button coordinates are relative to the confirm_quit_box_surf
+        self.yes_button = Button(yes_button_x, button_y, button_width, button_height, config.WHITE, config.DARK_GRAY, 'Yes (Y)', self.ui_font)
+        self.no_button = Button(no_button_x, button_y, button_width, button_height, config.WHITE, config.DARK_GRAY, 'No (N)', self.ui_font)
+
 
     def load_map(self, map_key: str) -> None:
         """Loads and configures a new map, including background music."""
@@ -273,7 +332,7 @@ class Game:
             map_data = pyscroll.TiledMapData(self.tmx_data)
 
             self.map_layer = pyscroll.BufferedRenderer(
-                map_data, self.screen.get_size(), clamp_camera=True, alpha=True
+                map_data, (config.SCREEN_WIDTH, config.SCREEN_HEIGHT), clamp_camera=True, alpha=True # Use game_surface size
             )
             self.map_layer.zoom = config.ZOOM_LEVEL
 
@@ -289,7 +348,7 @@ class Game:
             self.last_event_tile_properties = None
 
             # --- Recreate Renderer (No special pier logic needed here anymore) ---
-            self.map_layer = pyscroll.BufferedRenderer(map_data, self.screen.get_size(), clamp_camera=True, alpha=True)
+            self.map_layer = pyscroll.BufferedRenderer(map_data, (config.SCREEN_WIDTH, config.SCREEN_HEIGHT), clamp_camera=True, alpha=True) # Use game_surface size
             self.map_layer.zoom = config.ZOOM_LEVEL
 
             # --- Add Player ---
@@ -619,10 +678,10 @@ class Game:
                 text_box_height = 150
                 # 1. Define the visual background box rectangle
                 self.cutscene_text_bg_rect = pygame.Rect(
-                    text_margin,
-                    self.screen.get_height() - text_box_height - text_margin,
-                    self.screen.get_width() - (text_margin * 2),
-                    text_box_height
+                    text_margin, # Position relative to game_surface
+                    config.SCREEN_HEIGHT - text_box_height - text_margin,
+                    config.SCREEN_WIDTH - (text_margin * 2),
+                    text_box_height # Use config dimensions
                 )
 
                 # 2. Define the area *inside* the box for text rendering
@@ -711,7 +770,7 @@ class Game:
                 # Ending Title
                 # Calculate Y position based on the bottom of the images area
                 images_bottom_y = 60 # Default Y if no images loaded
-                if self.ending_image1_rect or self.ending_image2_rect:
+                if self.ending_image1_rect or self.ending_image2_rect: # These rects are already relative to game_surface
                      images_bottom_y = max(r.bottom for r in [self.ending_image1_rect, self.ending_image2_rect] if r is not None)
                 title_y_pos = images_bottom_y + 50 # Position title below the images area (adjust spacing as needed)
                 self.ending_title_surf = self.title_font.render("A Pier to the Past", True, config.WHITE)
@@ -730,7 +789,7 @@ class Game:
                 text_render_rect = pygame.Rect(0, 0, text_box_width, text_box_height) # Rect for text rendering area
                 self.ending_text_surf = render_textrect(ending_message, self.epilogue_font, text_render_rect, config.WHITE, (0,0,0,0), justification=1) # Centered text, use epilogue_font
                 text_y_pos = self.ending_title_rect.bottom + 20 # Position text below the title
-                self.ending_text_rect = self.ending_text_surf.get_rect(centerx=config.SCREEN_WIDTH / 2, top=text_y_pos)
+                self.ending_text_rect = self.ending_text_surf.get_rect(centerx=config.SCREEN_WIDTH / 2, top=text_y_pos) # Center on game_surface
             except Exception as e:
                 print(f"Error preparing ending screen text: {e}")
     # --- Main Game Loop Methods ---
@@ -749,6 +808,21 @@ class Game:
 
         print("Exiting game loop.")
 
+    def _map_mouse_coords(self, screen_pos: tuple[int, int]) -> tuple[int, int] | None:
+        """Maps mouse coordinates from the fullscreen display to the game_surface."""
+        screen_x, screen_y = screen_pos
+        # Translate coordinates relative to the top-left of the scaled game area
+        relative_x = screen_x - self.blit_offset_x
+        relative_y = screen_y - self.blit_offset_y
+
+        # Check if the click is within the scaled game area bounds
+        if 0 <= relative_x < self.scaled_width and 0 <= relative_y < self.scaled_height:
+            # Scale back down to game_surface coordinates
+            game_x = relative_x // self.scale_factor
+            game_y = relative_y // self.scale_factor
+            return game_x, game_y
+        print("Exiting game loop.")
+
     def handle_events(self) -> None:
         """Processes all events from Pygame's event queue."""
         for event in pygame.event.get():
@@ -758,6 +832,9 @@ class Game:
             if self.game_state == 'playing':
                 # Handle gameplay input (movement is handled in Player.update)
                 if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE: # Quit confirmation
+                        print("ESC pressed - Entering quit confirmation.")
+                        self.game_state = 'confirm_quit'
                     if event.key == pygame.K_e: # Interaction key
                         nearby_npc = self.find_nearby_interactable_npc()
                         if nearby_npc:
@@ -808,14 +885,42 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE: # Allow quitting from intro
                         self.running = False
-
                 # Check button press
-                mouse_pos = pygame.mouse.get_pos()
+                screen_mouse_pos = pygame.mouse.get_pos()
                 mouse_pressed = pygame.mouse.get_pressed()
-                if self.play_button and self.play_button.is_pressed(mouse_pos, mouse_pressed):
-                    print("Play button pressed - Starting game.")
-                    self.game_state = 'playing'
-                    self.load_map('pier') # Load the initial map NOW
+                game_mouse_pos = self._map_mouse_coords(screen_mouse_pos)
+
+                if game_mouse_pos and self.play_button:
+                    if self.play_button.is_pressed(game_mouse_pos, mouse_pressed):
+                        print("Play button pressed - Starting game.")
+                        self.game_state = 'playing'
+                        self.load_map('pier') # Load the initial map NOW
+
+            elif self.game_state == 'confirm_quit':
+                 if event.type == pygame.KEYDOWN:
+                     if event.key == pygame.K_ESCAPE or event.key == pygame.K_n: # Cancel quit
+                         print("Quit cancelled.")
+                         self.game_state = 'playing'
+                     elif event.key == pygame.K_y: # Confirm quit
+                         print("Quit confirmed.")
+                         self.running = False
+                 elif event.type == pygame.MOUSEBUTTONDOWN:
+                     if event.button == 1: # Left mouse button
+                         screen_mouse_pos = pygame.mouse.get_pos()
+                         game_mouse_pos = self._map_mouse_coords(screen_mouse_pos)
+
+                         if game_mouse_pos and self.yes_button and self.no_button:
+                             # Adjust mouse pos relative to the confirmation box for button checks
+                             box_relative_mouse_pos = (game_mouse_pos[0] - self.confirm_quit_box_rect.x,
+                                                       game_mouse_pos[1] - self.confirm_quit_box_rect.y)
+
+                             # Check buttons (using box_relative_mouse_pos)
+                             if self.yes_button.is_pressed(box_relative_mouse_pos, (True, False, False)):
+                                 print("Quit confirmed via 'Yes' button.")
+                                 self.running = False
+                             elif self.no_button.is_pressed(box_relative_mouse_pos, (True, False, False)):
+                                 print("Quit cancelled via 'No' button.")
+                                 self.game_state = 'playing'
 
             elif self.game_state == 'ending':
                 if event.type == pygame.KEYDOWN:
@@ -869,10 +974,13 @@ class Game:
 
     def draw(self) -> None:
         """Renders the current game scene based on the game_state."""
+        # --- Step 1: Draw everything onto the game_surface ---
+        self.game_surface.fill(config.BLACK) # Start with a clear surface each frame
+
         if self.game_state == 'playing':
             # --- Draw Gameplay Scene ---
             if self.group and self.map_layer:
-                self.group.draw(self.screen)
+                self.group.draw(self.game_surface) # Draw to game_surface
 
                 # --- Draw UI Elements ---
                 # Example FPS counter (uncomment if needed)
@@ -890,10 +998,10 @@ class Game:
 
                             # 1. Render and blit the black background/outline text slightly offset
                             acc_surf_black = self.funds_font.render(acc_text, True, config.BLACK)
-                            self.screen.blit(acc_surf_black, (ui_x_pos + outline_offset, ui_y_offset + outline_offset))
+                            self.game_surface.blit(acc_surf_black, (ui_x_pos + outline_offset, ui_y_offset + outline_offset))
                             # 2. Render and blit the main white text on top
                             acc_surf_white = self.funds_font.render(acc_text, True, config.WHITE) # Use funds_font
-                            self.screen.blit(acc_surf_white, (ui_x_pos, ui_y_offset))
+                            self.game_surface.blit(acc_surf_white, (ui_x_pos, ui_y_offset))
 
                             # Update the Y offset for the next UI element
                             ui_y_offset += acc_surf_white.get_height() + 5 # Add 5 pixels padding
@@ -906,10 +1014,10 @@ class Game:
                         # Use the same font and outline technique as the funds counter for consistency
                         # Render using ui_font (or funds_font if you prefer)
                         coords_surf_black = self.ui_font.render(coords_text, True, config.BLACK)
-                        self.screen.blit(coords_surf_black, (ui_x_pos + outline_offset, ui_y_offset + outline_offset))
+                        self.game_surface.blit(coords_surf_black, (ui_x_pos + outline_offset, ui_y_offset + outline_offset))
 
                         coords_surf_white = self.ui_font.render(coords_text, True, config.WHITE)
-                        self.screen.blit(coords_surf_white, (ui_x_pos, ui_y_offset))
+                        self.game_surface.blit(coords_surf_white, (ui_x_pos, ui_y_offset))
 
                         # Optional: Update ui_y_offset again if more UI elements are added below
                         # ui_y_offset += coords_surf_white.get_height() + 5
@@ -920,7 +1028,7 @@ class Game:
                     if not self.interact_prompt_surf: # Render only once if needed
                         self.interact_prompt_surf = self.ui_font.render("Press E to talk", True, config.BLACK, config.LIGHT_BLUE)
                     prompt_rect = self.interact_prompt_surf.get_rect(midbottom=nearby_npc.rect.midtop - pygame.Vector2(0, 5)) # Position above NPC
-                    self.screen.blit(self.interact_prompt_surf, prompt_rect)
+                    self.game_surface.blit(self.interact_prompt_surf, prompt_rect)
                 else:
                     self.interact_prompt_surf = None # Clear surface if no NPC nearby
 
@@ -937,49 +1045,68 @@ class Game:
 
             # 1. Draw the fullscreen background image first
             if self.cutscene_image_surface:
-                self.screen.blit(self.cutscene_image_surface, (0, 0))
+                # Scale image to game_surface size (it was previously scaled to screen size)
+                scaled_cutscene_img = pygame.transform.smoothscale(self.cutscene_image_surface, (config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+                self.game_surface.blit(scaled_cutscene_img, (0, 0))
             else:
                 # Fallback if image surface somehow wasn't created
-                self.screen.fill(config.BLACK)
+                self.game_surface.fill(config.BLACK)
 
             # 2. Draw the dark gray background box if its rect exists
             if self.cutscene_text_bg_rect:
-                pygame.draw.rect(self.screen, config.DARK_GRAY, self.cutscene_text_bg_rect)
+                # Draw the box onto game_surface (rect coords are already relative to it)
+                pygame.draw.rect(self.game_surface, (*config.DARK_GRAY, 200), self.cutscene_text_bg_rect, border_radius=5) # Semi-transparent
 
                 # 3. Draw the text surface (text only) on top of the background, offset by padding
                 if self.cutscene_text_surface:
                     text_blit_pos = (self.cutscene_text_bg_rect.x + self.cutscene_text_padding, self.cutscene_text_bg_rect.y + self.cutscene_text_padding)
-                    self.screen.blit(self.cutscene_text_surface, text_blit_pos)
+                    self.game_surface.blit(self.cutscene_text_surface, text_blit_pos)
 
             # 3. Draw "Press Enter" prompt on top
             if self.ui_font:
                  prompt_text = "Press ENTER to continue..."
                  prompt_surf = self.ui_font.render(prompt_text, True, config.WHITE)
                  # Position prompt at the bottom-center
-                 prompt_rect = prompt_surf.get_rect(centerx=self.screen.get_width() // 2, bottom=self.screen.get_height() - 20)
+                 prompt_rect = prompt_surf.get_rect(centerx=config.SCREEN_WIDTH // 2, bottom=config.SCREEN_HEIGHT - 20)
                  # Optional: Add a slight shadow/background for better visibility on complex images
                  # shadow_surf = self.ui_font.render(prompt_text, True, config.BLACK)
-                 # self.screen.blit(shadow_surf, prompt_rect.move(1,1)) # Offset shadow slightly
-                 self.screen.blit(prompt_surf, prompt_rect)
+                 # self.game_surface.blit(shadow_surf, prompt_rect.move(1,1)) # Offset shadow slightly
+                 self.game_surface.blit(prompt_surf, prompt_rect)
 
         elif self.game_state == 'dialogue':
             # Draw the normal game world *underneath* the dialogue box
             if self.group and self.map_layer:
-                self.group.draw(self.screen) # Draw map and sprites
-            self.dialogue_box.draw(self.screen) # Draw dialogue box on top
+                self.group.draw(self.game_surface) # Draw map and sprites to game_surface
+            if self.dialogue_box:
+                self.dialogue_box.draw(self.game_surface) # Draw dialogue box on top
+
         elif self.game_state == 'intro':
             # --- Draw Intro Screen ---
             # Draw background
             if self.intro_background:
-                self.screen.blit(self.intro_background, (0, 0))
+                # Scale background to fit game_surface
+                scaled_intro_bg = pygame.transform.smoothscale(self.intro_background, (config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+                self.game_surface.blit(scaled_intro_bg, (0, 0))
             else:
-                self.screen.fill(config.WHITE) # Fallback background
+                self.game_surface.fill(config.WHITE) # Fallback background
             # Draw title
             if self.title_surf and self.title_rect:
-                self.screen.blit(self.title_surf, self.title_rect)
+                self.game_surface.blit(self.title_surf, self.title_rect)
             # Draw button
             if self.play_button:
-                self.play_button.draw(self.screen)
+                self.play_button.draw(self.game_surface)
+
+        elif self.game_state == 'confirm_quit':
+            # 1. Draw the underlying 'playing' state first
+            if self.group and self.map_layer:
+                self.group.draw(self.game_surface)
+            # 2. Draw the confirmation box and its contents on top
+            if self.confirm_quit_box_surf and self.confirm_quit_box_rect:
+                self.game_surface.blit(self.confirm_quit_box_surf, self.confirm_quit_box_rect)
+                # Draw text and buttons relative to the box's surface/rect
+                self.game_surface.blit(self.confirm_quit_text_surf, self.confirm_quit_text_rect.move(self.confirm_quit_box_rect.topleft))
+                self.yes_button.draw(self.game_surface, offset=self.confirm_quit_box_rect.topleft) # Pass offset
+                self.no_button.draw(self.game_surface, offset=self.confirm_quit_box_rect.topleft) # Pass offset
 
         elif self.game_state == 'ending':
             # --- Draw Ending Screen ---
@@ -987,17 +1114,22 @@ class Game:
             self.screen.fill(config.BLACK)
             # --- Draw Ending Images ---
             if self.ending_image1_surf and self.ending_image1_rect:
-                self.screen.blit(self.ending_image1_surf, self.ending_image1_rect)
+                self.game_surface.blit(self.ending_image1_surf, self.ending_image1_rect)
             if self.ending_image2_surf and self.ending_image2_rect:
-                self.screen.blit(self.ending_image2_surf, self.ending_image2_rect)
+                self.game_surface.blit(self.ending_image2_surf, self.ending_image2_rect)
             if self.ending_title_surf and self.ending_title_rect:
-                self.screen.blit(self.ending_title_surf, self.ending_title_rect)
+                self.game_surface.blit(self.ending_title_surf, self.ending_title_rect)
             if self.ending_text_surf and self.ending_text_rect:
-                self.screen.blit(self.ending_text_surf, self.ending_text_rect)
+                self.game_surface.blit(self.ending_text_surf, self.ending_text_rect)
             # Add "Press ESC" prompt if not included in main text
 
 
-        # Update the display regardless of state
+        # --- Step 2: Scale the game_surface to the display screen ---
+        # Use transform.scale for nearest-neighbor (integer) scaling
+        scaled_surface = pygame.transform.scale(self.game_surface, (self.scaled_width, self.scaled_height))
+        self.screen.fill(config.BLACK) # Fill native screen with black (for letter/pillarboxing)
+        self.screen.blit(scaled_surface, (self.blit_offset_x, self.blit_offset_y)) # Blit centered
+
         pygame.display.flip()
 
 
@@ -1032,7 +1164,10 @@ def main() -> None:
         print(f"Warning: Could not load or set window icon: {e}")
     # --------------------------
 
-    screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
+    # --- Initialize in Fullscreen ---
+    # screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT)) # Old windowed mode
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN) # Use (0,0) for native resolution fullscreen
+    print(f"Display initialized in fullscreen mode: {screen.get_width()}x{screen.get_height()}")
     pygame.display.set_caption("Pier to the Past Game") # Caption is set here
 
     try:

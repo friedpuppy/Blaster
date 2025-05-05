@@ -30,8 +30,10 @@ class Button:
             font (pygame.font.Font): Pygame font object for the text.
             border_radius (int): Radius for rounded corners.
         """
+        # --- Existing __init__ code ---
         self.font = font
         self.text_content = text
+        # Store initial position relative to the container it might be placed in
         self.x = x
         self.y = y
         self.width = width
@@ -41,10 +43,13 @@ class Button:
         self.border_radius = border_radius
 
         # Create the button surface (transparent initially)
+        # This surface represents the button's visual appearance.
         self.image = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         # Draw the rounded rectangle background onto the image
         pygame.draw.rect(self.image, self.bg_color, self.image.get_rect(), border_radius=self.border_radius)
 
+        # This rect represents the button's position *on the surface it's drawn onto*.
+        # It's initially set using x, y but might be adjusted by the draw offset.
         self.rect = self.image.get_rect(topleft=(self.x, self.y))
 
         # Render text and center it on the button image
@@ -57,6 +62,12 @@ class Button:
         # mouse_pressed[0] corresponds to the left mouse button
         return self.rect.collidepoint(mouse_pos) and mouse_pressed[0]
 
-    def draw(self, surface: pygame.Surface):
-        """Draws the button onto the given surface."""
-        surface.blit(self.image, self.rect)
+    def draw(self, surface: pygame.Surface, offset: Optional[Tuple[int, int]] = None):
+        """
+        Draws the button onto the given surface, applying an optional offset.
+        """
+        draw_pos = self.rect.topleft
+        if offset:
+            # Adjust the drawing position by the offset
+            draw_pos = (draw_pos[0] + offset[0], draw_pos[1] + offset[1])
+        surface.blit(self.image, draw_pos) # Draw at the potentially offset position
