@@ -1165,8 +1165,10 @@ def main() -> None:
     # --------------------------
 
     # --- Initialize in Fullscreen ---
-    # screen = pygame.display.set_mode((config.SCREEN_WIDTH, config.SCREEN_HEIGHT)) # Old windowed mode
-    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN) # Use (0,0) for native resolution fullscreen
+    # Combine FULLSCREEN with DOUBLEBUF and HWSURFACE to potentially reduce tearing
+    display_flags = pygame.FULLSCREEN | pygame.DOUBLEBUF | pygame.HWSURFACE
+    # screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN) # Original fullscreen call
+    screen = pygame.display.set_mode((0, 0), display_flags, vsync=1)
     print(f"Display initialized in fullscreen mode: {screen.get_width()}x{screen.get_height()}")
     pygame.display.set_caption("Pier to the Past Game") # Caption is set here
 
