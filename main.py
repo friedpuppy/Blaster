@@ -19,8 +19,9 @@ from typing import Optional, Dict, List # Used for type hinting
 import os # Needed for checking music file existence
 import traceback # For better error reporting
 
+
 # Import necessary classes/data from dialogue.py
-from dialogue import DialogueBox, dialogues, Cutscene, collision_cutscenes, render_textrect, TextRectException
+from dialogue import Dialogue, DialogueBox, dialogues, Cutscene, collision_cutscenes, render_textrect, TextRectException
 
 # Import from our custom modules
 import config  # Game configuration variables

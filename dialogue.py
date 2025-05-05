@@ -370,13 +370,13 @@ collision_cutscenes: dict[str, Cutscene] = {
     # --- STORY1 STORY ONE STORY 1 ---
     "houseowner1_cutscene": Cutscene(
         image_paths=[
-            f'{IMAGES_DIR}/story1.jpg', # Slide 1
-            f'{IMAGES_DIR}/story1.jpg', # Slide 2
-            f'{IMAGES_DIR}/story1.jpg', # Slide 3
-            f'{IMAGES_DIR}/story1.jpg', # Slide 4
-            f'{IMAGES_DIR}/story1.jpg', # Slide 5
-            f'{IMAGES_DIR}/story1.jpg', # Slide 6
-            f'{IMAGES_DIR}/story1.jpg'  # Slide 7
+            f'{IMAGES_DIR}/story1 copy.jpg', # Slide 1
+            f'{IMAGES_DIR}/story1 copy.jpg', # Slide 2
+            f'{IMAGES_DIR}/story1 copy.jpg', # Slide 3
+            f'{IMAGES_DIR}/story1 copy.jpg', # Slide 4
+            f'{IMAGES_DIR}/story1 copy.jpg', # Slide 5
+            f'{IMAGES_DIR}/story1 copy.jpg', # Slide 6
+            f'{IMAGES_DIR}/story1 copy.jpg'  # Slide 7
         ],
         music_path=f'{MUSIC_DIR}/Cutscene_Music_1.mp3', # Example: Add the path to the music
         sentences=[
@@ -389,9 +389,9 @@ collision_cutscenes: dict[str, Cutscene] = {
             # Slide 4
             "Father lunged for a man trapped under the wreckage. A beam gave way. It caught his leg, crushing it flat. I still see it: his knuckles white on the timber, the blood thin and quick in the rain.",
             # Slide 5
-            "They dragged him home, boot sloshing. The doctor stitched him up, but he walked crooked ever after. The pier? A few gaps in the deck, scorch marks on the towers. Engineers called it a “miracle,” muttered about lightning rods.",
+            "They dragged him home, boot sloshing. The doctor stitched him up, but he walked crooked ever after. The pier? A few gaps in the deck, scorch marks on the towers. Engineers called it a \"miracle,\" muttered about lightning rods.",
             # Slide 6
-            "Father snorted. “Birthday Storm,” he'd grumble, kneading his knee when the air turned salt-thick. “Sea's just remindin' us who’s boss.” Brighton patched the planks, slapped on fresh paint. Tourists flocked back.",
+            "Father snorted. \"Birthday Storm,\" he'd grumble, kneading his knee when the air turned salt-thick. \"Sea's just remindin' us who's boss.\" Brighton patched the planks, slapped on fresh paint. Tourists flocked back.",
             # Slide 7
             "But whenever the wind snapped, Father's face went taut, his hand gripping the cane like it was the only thing holding him upright. We build. The sea undoes it."
 
@@ -415,21 +415,21 @@ collision_cutscenes: dict[str, Cutscene] = {
         music_path=None, # Example: This one has no specific music
         sentences=[
             # Slide 1
-            "The woman taps the watercolour above her mantel. “That's *Brighthelmston* by Turner—1824, just after the pier opened. Come, look closer.”",
+            "The woman taps the watercolour above her mantel. \"That's *Brighthelmston* by Turner—1824, just after the pier opened. Come, look closer.\"",
             # Slide 2
-            "She points to the foreground, where a small boat battles the waves. “See how he paints the crew? Just smudges of ochre and white, but you *feel* them fighting the swell. Not heroes, just fools in the wrong place. Like most of us.”",
+            "She points to the foreground, where a small boat battles the waves. \"See how he paints the crew? Just smudges of ochre and white, but you *feel* them fighting the swell. Not heroes, just fools in the wrong place. Like most of us.\"",
             # Slide 3
             "You squint. The boat's sails twist like crumpled paper.",
             # Slide 4
-            "“Now follow the pier.” Her finger trails the iron chains, stark against the storm. “Brown’s design—all geometry and pride. But Turner *mocks* it. See the rainbow?” A spectral arc glows above the chaos.",
+            "\"Now follow the pier.\" Her finger trails the iron chains, stark against the storm. \"Brown's design—all geometry and pride. But Turner *mocks* it. See the rainbow?\" A spectral arc glows above the chaos.",
             # Slide 5
-            "“Pretty, isn't it? A lie. That's the sublime—beauty that could kill you. The pier's man's answer to the sea. Turner paints the *argument*.”",
+            "\"Pretty, isn't it? A lie. That's the sublime—beauty that could kill you. The pier's man's answer to the sea. Turner paints the *argument*.\"",
             # Slide 6
-            "You mutter something about the buildings onshore. “Ah, the Pavilion!” She laughs. “He cheated, turned it sideways to fit the composition. *Picturesque* nonsense. But the details!”",
+            "You mutter something about the buildings onshore. \"Ah, the Pavilion!\" She laughs. \"He cheated, turned it sideways to fit the composition. *Picturesque* nonsense. But the details!\"",
             # Slide 7
-            "She plucks a magnifying glass from her desk. “St. Nicholas’s spire, the Duke of York’s Hotel… all here. Even the half-built Marine Parade. History in a storm.”",
+            "She plucks a magnifying glass from her desk. \"St. Nicholas's spire, the Duke of York's Hotel… all here. Even the half-built Marine Parade. History in a storm.\"",
             # Slide 8
-            "Her tone softens. “The rainbow’s the joke, though. We build piers, ships, promenades. Nature builds tempests. Turner knew which’d last.” She hands you the glass. “Keep looking. That boat’s still sinking.”"
+            "Her tone softens. \"The rainbow's the joke, though. We build piers, ships, promenades. Nature builds tempests. Turner knew which'd last.\" She hands you the glass. \"Keep looking. That boat's still sinking.\""
         ]
 
     ),
@@ -437,12 +437,21 @@ collision_cutscenes: dict[str, Cutscene] = {
       # --- STORY 3 STORY THREE STORY3 ---
     "houseowner3_cutscene": Cutscene(
         image_paths=[
-            f'{IMAGES_DIR}/story3.jpg' # Updated path
+            f'{IMAGES_DIR}/story3.jpg', # Slide 1 Image
+            f'{IMAGES_DIR}/story3.jpg', # Slide 2 Image
+            f'{IMAGES_DIR}/story3.jpg', # Slide 3 Image
+            f'{IMAGES_DIR}/story3.jpg'  # Slide 4 Image
         ],
         music_path=None,
         sentences=[
-            # Updated sentence to match image
-            "A depiction of the terrible storm of 1824. Press Enter to close."
+            # Slide 1 Text
+            "Ever read Porden's diary from 1802? Crossed to Dieppe on the Eliza—cramped boxes stacked like coffins, he called the cabins. No portholes. Want light? Open your door to the dining room's chaos. Privacy meant sitting in the dark or burning your own candle. Bedding? Haul it yourself—part of your 400-pound allowance. At least officers shared their table, though the return trip made you pack your own food, even after they gouged your coin.",
+            # Slide 2 Text
+            "Porden sketched the layout—'cabinetts stretched too large,' he scribbled. Took 18 hours. Just boarding was a farce: Eleanor, his daughter, green-faced, hauled into a cot while waves tossed their rowboat. Cabins had curtains for decency, but nothing stifled the stench. Boys swapped sick basins like ghosts.",
+            # Slide 3 Text
+            "Miss Appleton, though—poor soul. Puked from Brighton till Dieppe, left forgotten on the ship. Porden called her 'courageous'—a tall, sharp-tongued bluestocking, fluent in French, traveling alone. Carried ashore on a sailor's back, insensible.",
+            # Slide 4 Text
+            "Customs cleared, they limped to the English Hotel. Charged London prices for slop, Porden griped. Imagine it—eighteen hours of retching, then overpaying for gristle. The Chain Pier's cushy ferries? Saints' work compared to this.\" Her smirk was sharp as she jabbed the diary. \"Romantic age, my arse."
         ]
     ),
 
@@ -475,4 +484,3 @@ collision_cutscenes: dict[str, Cutscene] = {
 #         sentences=[ ... ], images=[ ... ]
 #     )
 # }
-
