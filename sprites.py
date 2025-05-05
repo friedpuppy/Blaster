@@ -1,6 +1,6 @@
 # sprites.py
 # Author: Callum Donnelly
-# Date: 2025-04-19
+# Date: 2025-05-05
 # Description: Contains sprite classes for the game, including the Player and NPCs.
 
 import pygame
