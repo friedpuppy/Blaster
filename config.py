@@ -1,4 +1,22 @@
 # config.py
+import sys
+import os
+
+# --- Determine the base path for resources ---
+# PyInstaller creates a temp folder and stores path in _MEIPASS (one-file)
+# Otherwise, get the directory of the executable (one-folder) or script
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    # Running in a PyInstaller bundle (one-file)
+    base_path = sys._MEIPASS
+    print(f"Running frozen (one-file), base path: {base_path}")
+elif getattr(sys, 'frozen', False):
+    # Running in a PyInstaller bundle (one-folder)
+    base_path = os.path.dirname(sys.executable)
+    print(f"Running frozen (one-folder), base path: {base_path}")
+else:
+    # Running as a normal Python script
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    print(f"Running as script, base path: {base_path}")
 
 # Game Constants
 SCREEN_WIDTH: int = 1280
@@ -15,39 +33,43 @@ BLACK = (0,0,0)
 DARK_GRAY = (96,89,88)
 LIGHT_BLUE = (173, 216, 230) # For interaction prompt
 
-# File paths (Using relative paths is generally good practice)
-ASSETS_DIR = './Assets'
-IMAGES_DIR = f'{ASSETS_DIR}/Images'
-MAPS_DIR = f'{ASSETS_DIR}/Maps'
-MUSIC_DIR = f'{ASSETS_DIR}/Sounds'
+# --- Define asset paths relative to the base path ---
+ASSETS_DIR = os.path.join(base_path, 'Assets')
+print(f"ASSETS_DIR resolved to: {ASSETS_DIR}")
 
-PIERMASTER_IMAGE: str = f'{IMAGES_DIR}/piermaster.png'
-PLAYER_IMAGE: str = f'{IMAGES_DIR}/gentleman.png'
-MAYOR_IMAGE: str = f'{IMAGES_DIR}/mayor.png'
-HOUSEOWNER_IMAGE: str = f'{IMAGES_DIR}/houseowner0.png'
+IMAGES_DIR = os.path.join(ASSETS_DIR, 'Images')
+MAPS_DIR = os.path.join(ASSETS_DIR, 'Maps')
+MUSIC_DIR = os.path.join(ASSETS_DIR, 'Sounds')
+FONTS_DIR = os.path.join(ASSETS_DIR, 'Fonts') # Define Fonts dir explicitly
 
-HOUSEOWNER_DEFAULT_IMAGE: str = f'{IMAGES_DIR}/houseowner0.png' # A general one if needed
-HOUSEOWNER_ONE_IMAGE: str = f'{IMAGES_DIR}/houseowner1.png' # Replace with actual filename
-HOUSEOWNER_TWO_IMAGE: str = f'{IMAGES_DIR}/houseowner2.png' # Replace with actual filename
-HOUSEOWNER_THREE_IMAGE: str = f'{IMAGES_DIR}/houseowner3.png' # Replace with actual filename
+# --- Specific File Paths using os.path.join ---
+PIERMASTER_IMAGE: str = os.path.join(IMAGES_DIR, 'piermaster.png')
+PLAYER_IMAGE: str = os.path.join(IMAGES_DIR, 'gentleman.png')
+MAYOR_IMAGE: str = os.path.join(IMAGES_DIR, 'mayor.png')
+HOUSEOWNER_IMAGE: str = os.path.join(IMAGES_DIR, 'houseowner0.png') # Default if needed by Houseowner class
 
-INTRO_BACKGROUND_IMAGE: str = f'{IMAGES_DIR}/intro_background.png' # Add your intro background image filename
-# ENDING_BACKGROUND_IMAGE: str = f'{IMAGES_DIR}/story1.jpg' # This is currently unused for the ending screen
+HOUSEOWNER_DEFAULT_IMAGE: str = os.path.join(IMAGES_DIR, 'houseowner0.png')
+HOUSEOWNER_ONE_IMAGE: str = os.path.join(IMAGES_DIR, 'houseowner1.png')
+HOUSEOWNER_TWO_IMAGE: str = os.path.join(IMAGES_DIR, 'houseowner2.png')
+HOUSEOWNER_THREE_IMAGE: str = os.path.join(IMAGES_DIR, 'houseowner3.png')
+
+INTRO_BACKGROUND_IMAGE: str = os.path.join(IMAGES_DIR, 'intro_background.png')
+# ENDING_BACKGROUND_IMAGE: str = os.path.join(IMAGES_DIR, 'story1.jpg') # Still unused
 
 MAP_PATHS: dict[str, str] = {
-    'pier': f"{MAPS_DIR}/pier_map.tmx",
-    'palace': f"{MAPS_DIR}/palace_map.tmx",
-    'streets': f"{MAPS_DIR}/streets_map.tmx",
-    'pier_repaired': f"{MAPS_DIR}/pier_map_repaired.tmx" # Add the repaired map
+    'pier': os.path.join(MAPS_DIR, "pier_map.tmx"),
+    'palace': os.path.join(MAPS_DIR, "palace_map.tmx"),
+    'streets': os.path.join(MAPS_DIR, "streets_map.tmx"),
+    'pier_repaired': os.path.join(MAPS_DIR, "pier_map_repaired.tmx")
 }
 
 
 # Map Specific Music Settings
 MAP_MUSIC_PATHS: dict[str, str | None] = {
-    'pier': f'{MUSIC_DIR}/ReachingOut.mp3',
-    'palace': f'{MUSIC_DIR}/Autumn Day.mp3', # Make sure 'Autumn Day.mp3' exists
-    'streets': f'{MUSIC_DIR}/When The Wind Blows.mp3', # Make sure 'When The Wind Blows.mp3' exists
-    'pier_repaired': f'{MUSIC_DIR}/Bright Wish.mp3' # Use same music, or change/set to None
+    'pier': os.path.join(MUSIC_DIR, 'ReachingOut.mp3'),
+    'palace': os.path.join(MUSIC_DIR, 'Autumn Day.mp3'),
+    'streets': os.path.join(MUSIC_DIR, 'When The Wind Blows.mp3'),
+    'pier_repaired': os.path.join(MUSIC_DIR, 'Bright Wish.mp3')
     # Add other maps here if they have music, or None if they don't
 }
 MAP_MUSIC_FADE_MS: int = 1000 # Fade duration for map music (in/out)
