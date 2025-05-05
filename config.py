@@ -32,7 +32,7 @@ HOUSEOWNER_TWO_IMAGE: str = f'{IMAGES_DIR}/houseowner2.png' # Replace with actua
 HOUSEOWNER_THREE_IMAGE: str = f'{IMAGES_DIR}/houseowner3.png' # Replace with actual filename
 
 INTRO_BACKGROUND_IMAGE: str = f'{IMAGES_DIR}/intro_background.png' # Add your intro background image filename
-ENDING_BACKGROUND_IMAGE: str = f'{IMAGES_DIR}/ending_background.png' # Add your ending background image filename
+# ENDING_BACKGROUND_IMAGE: str = f'{IMAGES_DIR}/story1.jpg' # This is currently unused for the ending screen
 
 MAP_PATHS: dict[str, str] = {
     'pier': f"{MAPS_DIR}/pier_map.tmx",

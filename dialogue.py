@@ -309,17 +309,26 @@ dialogues = {
     "rude_npc": Dialogue("RudeNPC", ["Go away! I don't have time for you.", "Leave me alone!"]),
 
     # --- Dialogue Keys for NPCs (Make sure these match keys used in main.py) ---
-    "pierkeeper_generic": Dialogue("Pierkeeper", ["The pier needs fixing... it's a tragedy."]),
-    "mayor_greeting": Dialogue("Mayor", ["Ah, hello there!", "Terrible business with the pier, isn't it?"]),
-    "houseowner0_generic": Dialogue("Resident", ["Just admiring the view.", "Shame about the pier."]),
+    "pierkeeper_generic": Dialogue("Pierkeeper", ["It's a terrible wreck... The pier is totally gone.", 
+                                                "What's that? You say you're a fanatic of the pier, and wish to help?",
+                                                "Go talk to the mayor, and come back to me when you've followed his instructions!", "His house is to the left."]),
+    "mayor_greeting": Dialogue("Mayor", ["Ah, hello there!", "Fine gentleman, you wish to help with the restoration of the pier?",
+                                         "I see! Go into town to the left, and collect subscriptions from the townsfolk. If you can raise £300, we can provide the rest.", "Hurry!"]),
+    "houseowner0_generic": Dialogue("Resident", ["What's that? You're collecting subscriptions for the pier repairs?", 
+                                                 "I can gladly offer some money.", 
+                                                 "Step into my house and I'll tell you a story about the great Birthday Storm of 1824."]),
     # Assign specific keys for each houseowner instance if needed later
-    "houseowner1_dialogue": Dialogue("Resident", ["It was such a lovely pier before the storm."]),
-    "houseowner2_dialogue": Dialogue("Resident", ["I hope they can repair it soon."]),
-    "houseowner3_dialogue": Dialogue("Resident", ["The town needs that pier."]),
+    "houseowner1_dialogue": Dialogue("Resident", ["What's that? You're collecting subscriptions for the pier repairs?", 
+                                                  "I can gladly offer some money.", 
+                                                  "Step into my house and I'll tell you about the time Turner came to visit."]),
+    "houseowner2_dialogue": Dialogue("Resident", ["What's that? You're collecting subscriptions for the pier repairs?", 
+                                                  "I can gladly offer some money.", 
+                                                  "Step into my house and I'll tell you a story of what life was like before that wonderful pier."]),
+    "houseowner3_dialogue": Dialogue("Resident", ["Go away!"]),
     "houseowner4_dialogue": Dialogue("Rude Resident", ["Go away!"]), # For the 4th one
     "houseowner1_generic": Dialogue("Resident", ["It was such a lovely pier before the storm."]),
     "houseowner2_generic": Dialogue("Resident", ["I hope they can repair it soon."]),
-    "houseowner3_generic": Dialogue("Resident", ["The town needs that pier."]),
+    "houseowner3_generic": Dialogue("Resident", ["I have nothing to say."]),
 
     # --- Add your NEW stories/dialogues here! ---
     "new_story_npc_1": Dialogue("Mysterious Figure", ["Have you seen the state of the pier?", "Something doesn't feel right about that storm..."]),
@@ -415,21 +424,21 @@ collision_cutscenes: dict[str, Cutscene] = {
         music_path=None, # Example: This one has no specific music
         sentences=[
             # Slide 1
-            "The woman taps the watercolour above her mantel. \"That's *Brighthelmston* by Turner—1824, just after the pier opened. Come, look closer.\"",
+            "The man taps the watercolour above his mantel. \"That's *Brighthelmston* by Turner—1824, just after the pier opened. Come, look closer.\"",
             # Slide 2
-            "She points to the foreground, where a small boat battles the waves. \"See how he paints the crew? Just smudges of ochre and white, but you *feel* them fighting the swell. Not heroes, just fools in the wrong place. Like most of us.\"",
+            "He points to the foreground, where a small boat battles the waves. \"See how he paints the crew? Just smudges of ochre and white, but you *feel* them fighting the swell. Not heroes, just fools in the wrong place. Like most of us.\"",
             # Slide 3
             "You squint. The boat's sails twist like crumpled paper.",
             # Slide 4
-            "\"Now follow the pier.\" Her finger trails the iron chains, stark against the storm. \"Brown's design—all geometry and pride. But Turner *mocks* it. See the rainbow?\" A spectral arc glows above the chaos.",
+            "\"Now follow the pier.\" His finger trails the iron chains, stark against the storm. \"Brown's design—all geometry and pride. But Turner *mocks* it. See the rainbow?\" A spectral arc glows above the chaos.",
             # Slide 5
             "\"Pretty, isn't it? A lie. That's the sublime—beauty that could kill you. The pier's man's answer to the sea. Turner paints the *argument*.\"",
             # Slide 6
-            "You mutter something about the buildings onshore. \"Ah, the Pavilion!\" She laughs. \"He cheated, turned it sideways to fit the composition. *Picturesque* nonsense. But the details!\"",
+            "You mutter something about the buildings onshore. \"Ah, the Pavilion!\" He laughs. \"He cheated, turned it sideways to fit the composition. *Picturesque* nonsense. But the details!\"",
             # Slide 7
-            "She plucks a magnifying glass from her desk. \"St. Nicholas's spire, the Duke of York's Hotel… all here. Even the half-built Marine Parade. History in a storm.\"",
+            "He plucks a magnifying glass from her desk. \"St. Nicholas's spire, the Duke of York's Hotel… all here. Even the half-built Marine Parade. History in a storm.\"",
             # Slide 8
-            "Her tone softens. \"The rainbow's the joke, though. We build piers, ships, promenades. Nature builds tempests. Turner knew which'd last.\" She hands you the glass. \"Keep looking. That boat's still sinking.\""
+            "His tone softens. \"The rainbow's the joke, though. We build piers, ships, promenades. Nature builds tempests. Turner knew which'd last.\" He hands you the glass. \"Keep looking. That boat's still sinking.\""
         ]
 
     ),

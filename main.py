@@ -100,6 +100,8 @@ class Game:
 
             # Font specifically for cutscene text (can be different)
             self.cutscene_font = pygame.font.Font(None, 28) # Example size
+            self.epilogue_font = pygame.font.Font(None, 36) # <-- New: Larger font for epilogue body
+            self.epilogue_title_font = pygame.font.Font(None, 72) # <-- New: Larger font for epilogue title
             print("UI and Cutscene Fonts initialized.")
 
         except pygame.error as e:
@@ -109,6 +111,8 @@ class Game:
             print(f"Error initializing fonts: {e}")
             self.ui_font = None
             self.cutscene_font = None
+            self.epilogue_font = None # Ensure it's None on error
+            self.epilogue_title_font = None # Ensure it's None on error
             self.title_font = None
             self.running = False # Stop if fonts fail
 
@@ -194,12 +198,60 @@ class Game:
         self.ending_title_rect: Optional[pygame.Rect] = None
         self.ending_text_surf: Optional[pygame.Surface] = None
         self.ending_text_rect: Optional[pygame.Rect] = None
+        # --- Modified for two images ---
+        self.ending_image1_surf: Optional[pygame.Surface] = None
+        self.ending_image1_rect: Optional[pygame.Rect] = None
+        self.ending_image2_surf: Optional[pygame.Surface] = None
+        self.ending_image2_rect: Optional[pygame.Rect] = None
 
         try:
-            # Load ending background
-            self.ending_background = pygame.image.load(config.ENDING_BACKGROUND_IMAGE).convert()
-            self.ending_background = pygame.transform.smoothscale(self.ending_background, self.screen.get_size())
-            # Pre-render ending text (can be done here or when entering the state)
+            # --- Ending Background Removed ---
+            # We'll use a black screen and draw the specific ending image on top.
+            # self.ending_background = pygame.image.load(config.ENDING_BACKGROUND_IMAGE).convert()
+            # self.ending_background = pygame.transform.smoothscale(self.ending_background, self.screen.get_size())
+            self.ending_background = None # Explicitly set to None
+
+            # --- Load Ending Images (Side-by-Side) ---
+            image_paths = [
+                f"{config.IMAGES_DIR}/ending_background1.jpeg",
+                f"{config.IMAGES_DIR}/ending_background2.jpg"
+            ]
+            image_surfaces = [None, None] # To store loaded/scaled surfaces
+            image_rects = [None, None]   # To store final positions
+
+            max_image_height = 0 # Keep track of the tallest image after scaling
+
+            # Define the total width available and padding
+            total_available_width = config.SCREEN_WIDTH * 0.8 # Use 80% of screen width for images
+            padding_between = 20 # Pixels between images
+            target_image_width = (total_available_width - padding_between) / 2
+
+            for i, path in enumerate(image_paths):
+                if os.path.exists(path):
+                    try:
+                        img = pygame.image.load(path).convert()
+                        # Scale based on target width, maintaining aspect ratio
+                        aspect_ratio = img.get_height() / img.get_width()
+                        target_height = int(target_image_width * aspect_ratio)
+                        image_surfaces[i] = pygame.transform.smoothscale(img, (int(target_image_width), target_height))
+                        max_image_height = max(max_image_height, target_height) # Update max height
+                    except pygame.error as e:
+                        print(f"Error loading or scaling ending image {i+1} ('{path}'): {e}")
+                else:
+                    print(f"Warning: Ending image {i+1} not found at {path}")
+
+            # Position the images side-by-side, centered horizontally, near the top
+            start_x = (config.SCREEN_WIDTH - total_available_width) / 2
+            image_y = 60 # Vertical position from the top
+            if image_surfaces[0]:
+                image_rects[0] = image_surfaces[0].get_rect(topleft=(start_x, image_y))
+            if image_surfaces[1]:
+                image_rects[1] = image_surfaces[1].get_rect(topleft=(start_x + target_image_width + padding_between, image_y))
+
+            self.ending_image1_surf, self.ending_image2_surf = image_surfaces
+            self.ending_image1_rect, self.ending_image2_rect = image_rects
+
+            # Pre-render ending text AFTER loading image, so positions can be based on it
             self._prepare_ending_screen_text()
         except (pygame.error, FileNotFoundError) as e:
             print(f"Error loading ending assets: {e}")
@@ -654,22 +706,31 @@ class Game:
 
     def _prepare_ending_screen_text(self):
         """Renders the text surfaces for the ending screen."""
-        if self.title_font and self.ui_font:
+        if self.epilogue_title_font and self.epilogue_font: # Check for the new epilogue fonts
             try:
                 # Ending Title
-                self.ending_title_surf = self.title_font.render("The End", True, config.WHITE)
-                self.ending_title_rect = self.ending_title_surf.get_rect(centerx=config.SCREEN_WIDTH / 2, y=150)
+                # Calculate Y position based on the bottom of the images area
+                images_bottom_y = 60 # Default Y if no images loaded
+                if self.ending_image1_rect or self.ending_image2_rect:
+                     images_bottom_y = max(r.bottom for r in [self.ending_image1_rect, self.ending_image2_rect] if r is not None)
+                title_y_pos = images_bottom_y + 50 # Position title below the images area (adjust spacing as needed)
+                self.ending_title_surf = self.title_font.render("A Pier to the Past", True, config.WHITE)
+                self.ending_title_rect = self.ending_title_surf.get_rect(centerx=config.SCREEN_WIDTH / 2, y=title_y_pos)
 
                 # Ending Body Text (using render_textrect for wrapping)
-                ending_message = ("Congratulations!\n\n"
-                                  "Thanks to your efforts, the Chain Pier has been saved, "
-                                  "and Brighton's future looks bright once more.\n\n"
-                                  "Press ESCAPE to exit.")
-                text_box_width = config.SCREEN_WIDTH - 200 # Width for text wrapping
-                text_box_height = 300
-                text_render_rect = pygame.Rect(0, 0, text_box_width, text_box_height)
-                self.ending_text_surf = render_textrect(ending_message, self.ui_font, text_render_rect, config.WHITE, (0,0,0,0), justification=1) # Centered text
-                self.ending_text_rect = self.ending_text_surf.get_rect(centerx=config.SCREEN_WIDTH / 2, centery=config.SCREEN_HEIGHT / 2 + 50)
+                ending_message = ("The Pier was quickly repaired, and would last another six decades of use. "
+                                  "Despite suffering more damage over time, it was always repaired. "
+                                  "The West Pier opened in 1866, specifically designed for amusements. "
+                                  "Combined with the opening of the Aquarium, crowds began to lose interest in the dated Chain Pier. "
+                                  "The Chain Pier finally collapsed in 1896, derelict and dangerously out of askew. "
+                                  "But for a brief moment in time, Brighton was the only town in England to have three piers at once.\n\n"
+                                  "THE END.")
+                text_box_width = config.SCREEN_WIDTH - 200 # Make text box wider
+                text_box_height = 350 # Increase height slightly to accommodate larger font
+                text_render_rect = pygame.Rect(0, 0, text_box_width, text_box_height) # Rect for text rendering area
+                self.ending_text_surf = render_textrect(ending_message, self.epilogue_font, text_render_rect, config.WHITE, (0,0,0,0), justification=1) # Centered text, use epilogue_font
+                text_y_pos = self.ending_title_rect.bottom + 20 # Position text below the title
+                self.ending_text_rect = self.ending_text_surf.get_rect(centerx=config.SCREEN_WIDTH / 2, top=text_y_pos)
             except Exception as e:
                 print(f"Error preparing ending screen text: {e}")
     # --- Main Game Loop Methods ---
@@ -922,10 +983,13 @@ class Game:
 
         elif self.game_state == 'ending':
             # --- Draw Ending Screen ---
-            if self.ending_background:
-                self.screen.blit(self.ending_background, (0, 0))
-            else:
-                self.screen.fill(config.BLACK) # Fallback
+            # Always draw black background first
+            self.screen.fill(config.BLACK)
+            # --- Draw Ending Images ---
+            if self.ending_image1_surf and self.ending_image1_rect:
+                self.screen.blit(self.ending_image1_surf, self.ending_image1_rect)
+            if self.ending_image2_surf and self.ending_image2_rect:
+                self.screen.blit(self.ending_image2_surf, self.ending_image2_rect)
             if self.ending_title_surf and self.ending_title_rect:
                 self.screen.blit(self.ending_title_surf, self.ending_title_rect)
             if self.ending_text_surf and self.ending_text_rect:
