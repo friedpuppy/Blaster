@@ -9,6 +9,7 @@ The codebase was dived into four files
 - config.py
 - sprites.py
 - dialog.py
+- ui.py
 
 
 ## Background to Story
