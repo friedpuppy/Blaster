@@ -206,13 +206,14 @@ class Game:
         # Create the surface where the actual game rendering happens at the fixed resolution
         self.game_surface = pygame.Surface((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
 
-        # Calculate integer scaling factor
-        scale_w = self.native_screen_width // config.SCREEN_WIDTH
-        scale_h = self.native_screen_height // config.SCREEN_HEIGHT
-        self.scale_factor = max(1, min(scale_w, scale_h)) # Ensure scale is at least 1
+        # Calculate scaling factor to fit native screen while preserving aspect ratio
+        scale_ratio_w = self.native_screen_width / config.SCREEN_WIDTH
+        scale_ratio_h = self.native_screen_height / config.SCREEN_HEIGHT
+        # Use the smaller ratio to ensure the entire game surface fits on the screen
+        self.scale_factor = min(scale_ratio_w, scale_ratio_h)
 
-        self.scaled_width = config.SCREEN_WIDTH * self.scale_factor
-        self.scaled_height = config.SCREEN_HEIGHT * self.scale_factor
+        self.scaled_width = int(config.SCREEN_WIDTH * self.scale_factor)
+        self.scaled_height = int(config.SCREEN_HEIGHT * self.scale_factor)
 
         # Calculate offset to center the scaled surface on the native screen
         self.blit_offset_x = (self.native_screen_width - self.scaled_width) // 2
@@ -818,10 +819,11 @@ class Game:
         # Check if the click is within the scaled game area bounds
         if 0 <= relative_x < self.scaled_width and 0 <= relative_y < self.scaled_height:
             # Scale back down to game_surface coordinates
-            game_x = relative_x // self.scale_factor
-            game_y = relative_y // self.scale_factor
+            # Use float division and then convert to int for precision
+            game_x = int(relative_x / self.scale_factor)
+            game_y = int(relative_y / self.scale_factor)
             return game_x, game_y
-        print("Exiting game loop.")
+        return None # Return None if outside the scaled game area
 
     def handle_events(self) -> None:
         """Processes all events from Pygame's event queue."""
