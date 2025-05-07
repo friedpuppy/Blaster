@@ -53,3 +53,5 @@ docs/_build/
 YourAppName.spec
 APierToThePast.spec
 PierToThePast.spec
+.DS_Store
+Assets/.DS_Store
