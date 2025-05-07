@@ -17,6 +17,7 @@ import pyscroll # For rendering Tiled maps efficiently
 from pytmx.util_pygame import load_pygame # Pygame-specific Tiled loader utility
 from typing import Optional, Dict, List # Used for type hinting
 import os # Needed for checking music file existence
+import math # For math.floor used in integer scaling
 import traceback # For better error reporting
 
 
@@ -206,11 +207,13 @@ class Game:
         # Create the surface where the actual game rendering happens at the fixed resolution
         self.game_surface = pygame.Surface((config.SCREEN_WIDTH, config.SCREEN_HEIGHT))
 
-        # Calculate scaling factor to fit native screen while preserving aspect ratio
+        # Calculate integer scaling factor to fit native screen while preserving aspect ratio
+        # and ensuring pixel-perfect square pixels.
         scale_ratio_w = self.native_screen_width / config.SCREEN_WIDTH
         scale_ratio_h = self.native_screen_height / config.SCREEN_HEIGHT
-        # Use the smaller ratio to ensure the entire game surface fits on the screen
-        self.scale_factor = min(scale_ratio_w, scale_ratio_h)
+        # Determine the largest integer scale factor that fits
+        self.scale_factor = math.floor(min(scale_ratio_w, scale_ratio_h))
+        self.scale_factor = max(1, int(self.scale_factor)) # Ensure at least 1x and it's an integer
 
         self.scaled_width = int(config.SCREEN_WIDTH * self.scale_factor)
         self.scaled_height = int(config.SCREEN_HEIGHT * self.scale_factor)
@@ -1128,7 +1131,14 @@ class Game:
 
         # --- Step 2: Scale the game_surface to the display screen ---
         # Use transform.scale for nearest-neighbor (integer) scaling
-        scaled_surface = pygame.transform.scale(self.game_surface, (self.scaled_width, self.scaled_height))
+        if self.scale_factor == 1:
+            # No scaling needed if factor is 1, use the surface directly.
+            # This avoids an unnecessary scaling operation.
+            scaled_surface = self.game_surface
+        else:
+            # For integer scaling > 1, scale_by is explicit about non-smoothed scaling.
+            scaled_surface = pygame.transform.scale_by(self.game_surface, self.scale_factor)
+
         self.screen.fill(config.BLACK) # Fill native screen with black (for letter/pillarboxing)
         self.screen.blit(scaled_surface, (self.blit_offset_x, self.blit_offset_y)) # Blit centered
 
