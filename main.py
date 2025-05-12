@@ -99,7 +99,7 @@ class Game:
                 self.funds_font = self.ui_font # Fallback to the default UI font
 
             # Font specifically for cutscene text (can be different)
-            self.cutscene_font = pygame.font.Font(None, 34) # Increased size
+            self.cutscene_font = pygame.font.Font(None, 30) # Increased size
             self.epilogue_font = pygame.font.Font(None, 42) # Increased size
             self.epilogue_title_font = pygame.font.Font(None, 84) # Increased size
             print("UI and Cutscene Fonts initialized.")
