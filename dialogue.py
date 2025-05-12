@@ -312,7 +312,7 @@ dialogues = {
     "pierkeeper_generic": Dialogue("Pierkeeper", ["It's a terrible wreck... The pier is totally gone\n\n....what's that? You say you wish to help?",
                                                 "Go talk to the mayor, perhaps he can fund the repairs!\n\nHis house is to the left."]),
     "mayor_greeting": Dialogue("Mayor", ["Ah, hello there!", "Fine gentleman, you wish to help with the restoration of the pier?",
-                                         "I see! if you can collect donations from the townsfolk I will help. If you can raise £300, we can provide the rest.", "Hurry!"]),
+                                         "I see! If you can collect donations from the townsfolk I will help. If you can raise £300, we can provide the rest.", "Hurry!"]),
     "houseowner0_generic": Dialogue("Resident", ["What's that? You're collecting subscriptions for the pier repairs?\n\nI can gladly offer some money.", 
                                                  "Step into my house and I'll tell you a story about the great Birthday Storm of 1824."]),
     # Assign specific keys for each houseowner instance if needed later
